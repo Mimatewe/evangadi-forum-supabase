@@ -1,0 +1,594 @@
+/* =========================
+   GUIDELINES CARD UI
+========================= */
+
+.guidelines-section {
+  margin-bottom: 2rem;
+}
+
+.guidelines-card {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid #e5e7eb;
+  border-left: 6px solid #f97316; /* orange accent */
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.guidelines-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.09);
+}
+
+/* Title */
+.guidelines-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+/* Subtitle */
+.guidelines-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* Sections */
+.guidelines-block {
+  margin-bottom: 18px;
+}
+
+/* Section heading */
+.guidelines-heading {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 10px;
+}
+
+/* List */
+.guidelines-list {
+  list-style: disc;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+/* Strong emphasis */
+.guidelines-list strong {
+  color: #111827;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .guidelines-card {
+    padding: 18px;
+    border-left-width: 4px;
+  }
+
+  .guidelines-title {
+    font-size: 18px;
+  }
+}
+/* =========================
+   PUBLISH HEADER (FLAT BODY)
+========================= */
+
+.publish-header-section {
+  margin-bottom: 20px;
+  padding: 0; /* no spacing box look */
+}
+
+/* Tag */
+.publish-tag {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #f97316;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+/* Title */
+.publish-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+/* Description */
+.publish-description {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+  max-width: 700px; /* keeps it readable */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .publish-title {
+    font-size: 20px;
+  }
+
+  .publish-description {
+    font-size: 13px;
+  }
+}
+
+/* =========================
+   FORM CONTAINER
+========================= */
+
+.publish-form {
+  background: #fff;
+  padding: 24px;
+}
+
+.publish-form-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* =========================
+   FORM GROUP
+========================= */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* Inputs */
+.form-input {
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+/* =========================
+   TEXTAREA EDITOR
+========================= */
+
+.editor-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.editor-tools {
+  display: flex;
+  gap: 10px;
+  color: #64748b;
+}
+
+.char-count {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 14px;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  resize: vertical;
+}
+
+/* =========================
+   AI SECTION
+========================= */
+
+.ai-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6d28d9;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ai-note {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* =========================
+   DIVIDER
+========================= */
+
+.form-divider {
+  border: none;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* =========================
+   FOOTER ACTIONS
+========================= */
+
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-cancel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #fb923c;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #f97316;
+}
+
+.text-muted {
+  font-size: 12px;
+  color: #94a3b8; /* soft gray */
+  line-height: 1.4;
+}
+
+.coach-card {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e9e9ec;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow:
+    0 4px 20px -2px rgba(17, 24, 39, 0.03),
+    0 2px 6px -1px rgba(17, 24, 39, 0.02);
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.coach-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f4f4f5;
+  background: linear-gradient(to bottom, #fbfbfe, #ffffff);
+}
+
+.coach-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.coach-avatar-glow {
+  display: flex;
+  height: 32px;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+}
+
+.coach-card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.coach-card-subtitle {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #a78bfa;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.coach-badge {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #6b21a8;
+  background-color: #f3e8ff;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  border: 1px solid #e9d5ff;
+}
+
+/* Response Split Layout System */
+.coach-card-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #ffffff;
+}
+
+@media (min-width: 768px) {
+  .coach-card-body {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+.coach-data-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.column-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.coach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.coach-item {
+  display: flex;
+  align-items: start;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid;
+  transition: transform 0.2s ease;
+}
+
+.coach-item:hover {
+  transform: translateX(2px);
+}
+
+/* Bullet Customizations */
+.bullet-indicator {
+  margin-top: 0.375rem;
+  height: 5px;
+  width: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bullet-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.125rem;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background-color: #d1fae5;
+  color: #059669;
+  flex-shrink: 0;
+}
+
+/* Animation Micro-Triggers */
+.animate-fade-in {
+  animation: cardReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.spin-animation {
+  animation: spinAround 1.2s linear infinite;
+}
+
+@keyframes spinAround {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   Modern Inline Form Validation Extensions
+   ========================================== */
+
+.input-field-error {
+  border-color: #f87171 !important; /* Crimson edge highlight */
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
+}
+
+.inline-error-msg {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.725rem;
+  font-weight: 500;
+  color: #dc2626;
+  margin-top: 0.45rem;
+  animation: inlineSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes inlineSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================
+   Guidelines Compact Split-Card Layout
+   ========================================== */
+
+.guidelines-split-card {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  padding: 1.2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  margin-bottom: 1.5rem;
+
+  /* 🔸 Entire Parent Card Accent Border */
+  border-left: 4px solid #fdba74; /* Subdued initial amber/orange border */
+  transition:
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 🎯 Triggers active glow when hovering anywhere over the card */
+.guidelines-split-card:hover {
+  border-left-color: #f97316; /* Energetic vivid Orange on hover */
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.03);
+}
+
+.guidelines-card-header {
+  border-bottom: 1px solid #f4f4f5;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.guidelines-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.guidelines-subtitle {
+  font-size: 0.75rem;
+  color: #71717a;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Split Content Columns Grid */
+.guidelines-split-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+.guidelines-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.guidelines-heading {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #27272a;
+  margin: 0 0 0.25rem 0;
+}
+
+.guidelines-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.guidelines-list li {
+  font-size: 0.725rem;
+  line-height: 1.35;
+  color: #4b5563;
+}
+
+/* Desktop Layout: Split columns with middle divider */
+@media (min-width: 768px) {
+  .guidelines-split-body {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  /* Just a simple clean vertical line separating the two text column sections */
+  .guidelines-split-body .guidelines-block + .guidelines-block {
+    border-left: 1px solid #e4e4e7;
+    padding-left: 2rem;
+  }
+}
