@@ -40,7 +40,7 @@ export const getSingleAnswerService = async (answerId) => {
     LIMIT 1
   `;
 
-  const rows = await safeExecute(sql, [answerId]);
+  const rows = await safeExcute(sql, [answerId]);
 
   if (rows.length === 0) {
     throw new NotFoundError("Answer not found");
@@ -71,6 +71,6 @@ if(question.user_id === userId){
 const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
 const result = await safeExcute(insertSql,[questionId,userId,content])
  
-return getSingleAnswerService(answerId)
+return getSingleAnswerService(result.insertId);
 
 }
