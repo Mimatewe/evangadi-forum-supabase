@@ -1,5 +1,5 @@
 
-import { safeExcute } from "../../../../db/db.js";
+import { safeExecute } from "../../../../db/db.js";
 
 import {
   BadRequestError,
@@ -40,7 +40,7 @@ export const getSingleAnswerService = async (answerId) => {
     LIMIT 1
   `;
 
-  const rows = await safeExcute(sql, [answerId]);
+  const rows = await safeExecute(sql, [answerId]);
 
   if (rows.length === 0) {
     throw new NotFoundError("Answer not found");
@@ -51,7 +51,10 @@ export const getSingleAnswerService = async (answerId) => {
 
 
 const getQuestionOwner = async(questionId)=>{
-    const rows = await safeExcute(`SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,[questionId])
+    const rows = await safeExecute(
+      `SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,
+      [questionId],
+    );
     if (rows.length === 0) {
       throw new NotFoundError("Question not found");
     }
@@ -69,7 +72,7 @@ if(question.user_id === userId){
 }
 
 const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
-const result = await safeExcute(insertSql,[questionId,userId,content])
+const result = await safeExecute(insertSql, [questionId, userId, content]);
  
 return getSingleAnswerService(result.insertId);
 
