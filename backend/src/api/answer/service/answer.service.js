@@ -1,10 +1,14 @@
 
+<<<<<<< HEAD
 import { safeExecute } from "../../../../db/db.js";
+=======
+import { safeExecute } from "../../../../db/config.js";
+>>>>>>> 80ca6b92b4b2b114bfac6db6976621523b77174c
 
 import {
   BadRequestError,
   NotFoundError,
-} from "../../../utils/errors/utilsErr.js";
+} from "../../../utils/errors/index.js";
 
 
 
