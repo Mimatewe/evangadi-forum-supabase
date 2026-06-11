@@ -1,14 +1,15 @@
 import express from "express";
 import { authenticateUser } from "../../../middleware/authentication.js";
-import {createAnswerController} from "../controller/answer.controller.js"
-import {createAnswerValidation} from "../validation/answer.validation.js"
+import { createAnswerController } from "../controller/answer.controller.js";
+import { createAnswerValidation } from "../validation/answer.validation.js";
 
-const answerRoute = express.Router();
+const answersRoutes = express.Router();
 
-answerRoute.post(
+answersRoutes.post(
   "/",
   authenticateUser,
-  createAnswerValidation,createAnswerController,
+  createAnswerValidation,
+  createAnswerController,
 );
 
-export default answerRoute;
+export default answersRoutes;
