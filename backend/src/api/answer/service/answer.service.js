@@ -1,6 +1,5 @@
-import { safeExecute } from "../../../../db/config.js";
-
 import { BadRequestError, NotFoundError } from "../../../utils/errors/index.js";
+import { safeExecute } from "../../../../db/config.js";
 
 const mapAnswer = (row) => ({
   id: row.id,
