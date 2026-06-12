@@ -1,10 +1,10 @@
 
-import { safeExcute } from "../../../../db/db.js";
+import { safeExecute } from "../../../../db/config.js";
 
 import {
   BadRequestError,
   NotFoundError,
-} from "../../../utils/errors/utilsErr.js";
+} from "../../../utils/errors/index.js";
 
 
 
