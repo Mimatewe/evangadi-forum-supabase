@@ -1,12 +1,6 @@
+import { safeExecute } from "../../../../db/config.js";
 
-import { safeExcute } from "../../../../db/db.js";
-
-import {
-  BadRequestError,
-  NotFoundError,
-} from "../../../utils/errors/utilsErr.js";
-
-
+import { BadRequestError, NotFoundError } from "../../../utils/errors/index.js";
 
 const mapAnswer = (row) => ({
   id: row.id,
@@ -20,8 +14,6 @@ const mapAnswer = (row) => ({
     lastName: row.lastName,
   },
 });
-
-
 
 export const getSingleAnswerService = async (answerId) => {
   const sql = `
@@ -49,28 +41,26 @@ export const getSingleAnswerService = async (answerId) => {
   return mapAnswer(rows[0]);
 };
 
+const getQuestionOwner = async (questionId) => {
+  const rows = await safeExcute(
+    `SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,
+    [questionId],
+  );
+  if (rows.length === 0) {
+    throw new NotFoundError("Question not found");
+  }
 
-const getQuestionOwner = async(questionId)=>{
-    const rows = await safeExcute(`SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,[questionId])
-    if (rows.length === 0) {
-      throw new NotFoundError("Question not found");
-    }
+  return rows[0];
+};
 
-    return rows[0];
-}
+export const createAnswerService = async ({ questionId, userId, content }) => {
+  const question = await getQuestionOwner(questionId);
+  if (question.user_id === userId) {
+    throw new BadRequestError("You cannot answer your own question");
+  }
 
+  const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
+  const result = await safeExcute(insertSql, [questionId, userId, content]);
 
-
-export const createAnswerService = async ({questionId,userId,content})=>{
-
-const question = await getQuestionOwner(questionId)
-if(question.user_id === userId){
-    throw new BadRequestError("You cannot answer your own question")
-}
-
-const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
-const result = await safeExcute(insertSql,[questionId,userId,content])
- 
-return getSingleAnswerService(answerId)
-
-}
+  return getSingleAnswerService(answerId);
+};
