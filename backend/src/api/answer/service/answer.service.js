@@ -51,7 +51,10 @@ export const getSingleAnswerService = async (answerId) => {
 
 
 const getQuestionOwner = async(questionId)=>{
-    const rows = await safeExcute(`SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,[questionId])
+    const rows = await safeExecute(
+      `SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,
+      [questionId],
+    );
     if (rows.length === 0) {
       throw new NotFoundError("Question not found");
     }
@@ -69,8 +72,8 @@ if(question.user_id === userId){
 }
 
 const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
-const result = await safeExcute(insertSql,[questionId,userId,content])
+const result = await safeExecute(insertSql, [questionId, userId, content]);
  
-return getSingleAnswerService(answerId)
+return getSingleAnswerService(result.insertId);
 
 }
