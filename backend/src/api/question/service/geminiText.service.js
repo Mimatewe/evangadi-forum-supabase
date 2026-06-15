@@ -51,29 +51,80 @@ async function generateText(prompt) {
 
     return result.response.text();
   } catch (error) {
-    console.error("=== GEMINI TEXT GENERATION ERROR ===");
-    console.error(error);
+   
 
     throw new ServiceUnavailableError(
       "Failed to generate text from Gemini. Please try again later.",
     );
   }
 }
-
 export async function generateQuestionDraftCoachService({ title, content }) {
-  const prompt = `You are an expert programming forum coach. Review the draft question below and provide a JSON object with two fields: \n1) feedback: an array of concise observations about clarity, structure, and completeness.\n2) suggestions: an array of practical improvements to make the question stronger.\nOnly return valid JSON with those two fields.\n\nDraft question title: ${title || "(no title provided)"}\nDraft question content: ${content}\n`;
+
+const prompt = `You are an expert programming forum coach.
+
+Review the draft question and return ONLY valid JSON with the following structure:
+
+{
+  "score": number,
+  "strength": "weak" | "average" | "strong",
+  "feedback": [],
+  "suggestions": []
+}
+
+Scoring guidelines:
+- 0-49 = weak
+- 50-79 = average
+- 80-100 = strong
+
+Evaluate:
+- clarity
+- completeness
+- specificity
+- technical detail
+- usefulness to potential responders
+
+Do not require code snippets, stack traces, or reproduction steps unless the question appears to be a debugging or troubleshooting question.
+For learning, conceptual, or discussion questions, focus on whether the topic is clear, specific, and likely to receive useful answers.
+
+Suggestions should be short, simple, and beginner-friendly.
+
+Avoid long explanations.
+
+Each suggestion should be a practical action the user can take immediately.
+
+Examples:
+- Specify the programming language.
+- Add a code example.
+- Explain what you expected to happen.
+- Include the error message.
+- Narrow the question to one topic.
+
+Draft question title: ${title || "(no title provided)"}
+
+Draft question content: ${content}
+`;
+
 
   const systemInstruction =
     "You are a helpful, concise, and structured AI coach for programming forum questions.";
 
   const rawResponse = await generateText(prompt, systemInstruction);
 
+  console.log("=== GEMINI RAW RESPONSE ===");
+  console.log(rawResponse);
+
   try {
     const parsed = parseJSONFromText(rawResponse);
+
     return {
+      score: Number(parsed.score || 0),
+
+      strength: String(parsed.strength || "weak").toLowerCase(),
+
       feedback: Array.isArray(parsed.feedback)
         ? parsed.feedback
         : [String(parsed.feedback || "")],
+
       suggestions: Array.isArray(parsed.suggestions)
         ? parsed.suggestions
         : parsed.suggestions
@@ -87,16 +138,27 @@ export async function generateQuestionDraftCoachService({ title, content }) {
   }
 }
 
+// added
+
 export async function assessAnswerAgainstQuestionService({
   questionHash,
   answerText,
 }) {
   const { question } = await getSingleQuestionService({ questionHash });
+
   if (!question) {
     throw new NotFoundError("Question not found");
   }
 
-  const prompt = `You are an expert answer evaluator for a programming forum. Given the original question and the draft answer, respond with valid JSON containing: \n- level: one of \"strong\", \"partial\", or \"weak\"\n- note: a short explanation of how well the answer fits the question.\n\nOriginal question title: ${question.title}\nOriginal question content: ${question.content}\nDraft answer: ${answerText}\n`;
+  const prompt = `You are an expert answer evaluator for a programming forum. Given the original question and the draft answer, respond with valid JSON containing:
+
+- level: one of "strong", "partial", or "weak"
+- note: a short explanation of how well the answer fits the question.
+
+Original question title: ${question.title}
+Original question content: ${question.content}
+Draft answer: ${answerText}
+`;
 
   const systemInstruction =
     "Evaluate how well the answer addresses the question. Return only valid JSON with level and note.";
@@ -105,6 +167,7 @@ export async function assessAnswerAgainstQuestionService({
 
   try {
     const parsed = parseJSONFromText(rawResponse);
+
     return {
       level: String(parsed.level || "weak").toLowerCase(),
       note: String(parsed.note || parsed.feedback || "No note returned."),
