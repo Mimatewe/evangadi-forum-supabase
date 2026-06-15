@@ -14,6 +14,8 @@ import Landing from "./pages/Landing/Landing";
 import PostQuestion from "./pages/PostQuestion/PostQuestion.jsx";
 import QuestionDetail from "./pages/QuestionDetail/QuestionDetail";
 
+import MyQuestions from "./pages/MyQuestions/MyQuestions";
+
 function App() {
   return (
     <BrowserRouter>
@@ -57,7 +59,7 @@ function App() {
               path="/my-questions"
               element={
                 <ProtectedRoute>
-                  <h1>My Questions Page</h1>
+                  <MyQuestions />
                 </ProtectedRoute>
               }
             />

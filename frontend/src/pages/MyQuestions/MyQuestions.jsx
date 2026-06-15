@@ -1,7 +1,5 @@
-
-
 import { useEffect, useState } from "react";
-import { getQuestions } from "../../services/question.service";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 export default function MyQuestions() {
@@ -19,11 +17,20 @@ export default function MyQuestions() {
     try {
       setIsLoading(true);
 
-      const response = await getQuestions({
-        mine: true,
-      });
+      const token = localStorage.getItem("token");
 
-      setMyQuestions(response.data || []);
+      const response = await axios.get(
+        "http://localhost:3777/api/questions?mine=true",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      console.log("My Questions Response:", response.data);
+
+      setMyQuestions(response.data.data || []);
     } catch (err) {
       console.error(err);
       setError("Failed to fetch questions.");
@@ -113,7 +120,6 @@ export default function MyQuestions() {
             backgroundColor: "#fff",
             cursor: "pointer",
             boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-            transition: "0.2s ease",
           }}
         >
           <h3
