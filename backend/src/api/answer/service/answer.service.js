@@ -49,8 +49,19 @@ const getQuestionOwner = async (questionId) => {
     throw new NotFoundError("Question not found");
   }
 
+<<<<<<< HEAD
   return rows[0];
 };
+=======
+const getQuestionOwner = async(questionId)=>{
+    const rows = await safeExecute(
+      `SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,
+      [questionId],
+    );
+    if (rows.length === 0) {
+      throw new NotFoundError("Question not found");
+    }
+>>>>>>> bcc84671cf2eae9f49966f8c0b8b589b2ea766e1
 
 export const createAnswerService = async ({ questionId, userId, content }) => {
   const question = await getQuestionOwner(questionId);
@@ -61,5 +72,22 @@ export const createAnswerService = async ({ questionId, userId, content }) => {
   const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
   const result = await safeExcute(insertSql, [questionId, userId, content]);
 
+<<<<<<< HEAD
   return getSingleAnswerService(answerId);
 };
+=======
+
+export const createAnswerService = async ({questionId,userId,content})=>{
+
+const question = await getQuestionOwner(questionId)
+if(question.user_id === userId){
+    throw new BadRequestError("You cannot answer your own question")
+}
+
+const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
+const result = await safeExecute(insertSql, [questionId, userId, content]);
+ 
+return getSingleAnswerService(result.insertId);
+
+}
+>>>>>>> bcc84671cf2eae9f49966f8c0b8b589b2ea766e1
