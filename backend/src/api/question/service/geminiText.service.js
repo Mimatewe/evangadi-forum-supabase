@@ -45,7 +45,7 @@ function extractTextFromResponse(response) {
     .trim();
 }
 
-async function generateText(prompt) {
+export async function generateText(prompt) {
   try {
     const result = await geminiTextModel.generateContent(prompt);
 
