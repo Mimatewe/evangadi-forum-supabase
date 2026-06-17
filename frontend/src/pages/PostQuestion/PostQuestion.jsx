@@ -326,6 +326,22 @@ export default function PostQuestion() {
                     <p className="coach-card-subtitle">
                       Real-time Quality Index
                     </p>
+
+                    {/* this one div is added separately */}
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <span
+                        className={`strength-badge ${coachResponse.strength}`}
+                      >
+                        {coachResponse.strength?.toUpperCase()}
+                      </span>
+
+                      <span className="score-badge">
+                        {coachResponse.score}/100
+                      </span>
+                    </div>
+
+
                   </div>
                 </div>
                 <div className="coach-badge">Optimization Engine Active</div>

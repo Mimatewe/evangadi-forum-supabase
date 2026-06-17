@@ -47,9 +47,19 @@ const getQuestionOwner = async (questionId) => {
     [questionId],
   );
 
-  if (rows.length === 0) {
-    throw new NotFoundError("Question not found");
-  }
+const getQuestionOwner = async(questionId)=>{
+    const rows = await safeExecute(
+      `SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,
+      [questionId],
+    );
+    if (rows.length === 0) {
+      throw new NotFoundError("Question not found");
+    }
+
+    return rows[0];
+}
+
+
 
   return rows[0];
 };
@@ -60,8 +70,9 @@ export const createAnswerService = async ({ questionId, userId, content }) => {
     throw new BadRequestError("You cannot answer your own question");
   }
 
-  const insertSql = `INSERT INTO answers (question_id, user_id, content) VALUES (?,?,?)`;
-  const result = await safeExecute(insertSql, [questionId, userId, content]);
+const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
+const result = await safeExecute(insertSql, [questionId, userId, content]);
+ 
+return getSingleAnswerService(result.insertId);
 
-  return getSingleAnswerService(result.insertId);
-};
+}
