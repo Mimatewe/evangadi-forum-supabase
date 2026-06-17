@@ -1,19 +1,48 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { apiClient } from "../../services/core/api.client";
+import styles from "./MyQuestions.module.css";
+
+function getInitials(firstName, lastName) {
+  return (
+    `${firstName?.charAt(0) ?? ""}${lastName?.charAt(0) ?? ""}`.toUpperCase() ||
+    "?"
+  );
+}
+
+function formatDate(iso) {
+  if (!iso) return "Recent";
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function resolveAuthor(question) {
+  const author = question.author ?? {};
+  return {
+    firstName: author.firstName ?? question.firstName ?? "",
+    lastName: author.lastName ?? question.lastName ?? "",
+  };
+}
 
 export default function MyQuestions() {
   const [myQuestions, setMyQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const navigate = useNavigate();
+  const itemsPerPage = 7;
 
   useEffect(() => {
-    fetchMyQuestions();
-  }, []);
+    fetchMyQuestions(currentPage);
+  }, [currentPage]);
 
-  const fetchMyQuestions = async () => {
+  const fetchMyQuestions = async (page) => {
     try {
       setIsLoading(true);
 
@@ -39,45 +68,39 @@ export default function MyQuestions() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+
   if (isLoading) {
     return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "60px",
-        }}
-      >
-        Loading your questions...
+      <div className={styles.stateCard}>
+        <p>Loading your questions...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div
-        style={{
-          textAlign: "center",
-          color: "red",
-          padding: "60px",
-        }}
-      >
-        {error}
+      <div className={styles.stateCard}>
+        <p className={styles.errorText}>{error}</p>
       </div>
     );
   }
 
   if (myQuestions.length === 0) {
     return (
-      <div
-        style={{
-          maxWidth: "900px",
-          margin: "40px auto",
-          padding: "20px",
-          textAlign: "center",
-        }}
-      >
-        <h2>No Questions Yet</h2>
-        <p>You haven't asked any questions yet.</p>
+      <div className={styles.pageShell}>
+        <div className={styles.headerCard}>
+          <p className={styles.eyebrow}>Your workspace</p>
+          <h1 className={styles.pageTitle}>Your topics</h1>
+          <p className={styles.pageDescription}>
+            Only questions you created appear here.
+          </p>
+        </div>
+
+        <div className={styles.stateCard}>
+          <h2 className={styles.emptyTitle}>No Questions Yet</h2>
+          <p>You haven't asked any questions yet.</p>
+        </div>
       </div>
     );
   }
@@ -139,17 +162,49 @@ export default function MyQuestions() {
             {question.content?.slice(0, 180)}...
           </p>
 
-          <div
-            style={{
-              marginTop: "12px",
-              color: "#f97316",
-              fontWeight: "600",
-            }}
+      {totalPages > 1 && (
+        <div className={styles.paginationBar}>
+          <button
+            type="button"
+            className={styles.paginationButton}
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={currentPage === 1}
           >
-            {question.answerCount || 0} Replies
+            Back
+          </button>
+
+          <div className={styles.paginationNumbers}>
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+              (pageNumber) => (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  className={`${styles.paginationNumber} ${
+                    pageNumber === currentPage
+                      ? styles.paginationNumberActive
+                      : ""
+                  }`}
+                  onClick={() => setCurrentPage(pageNumber)}
+                  aria-current={pageNumber === currentPage ? "page" : undefined}
+                >
+                  {pageNumber}
+                </button>
+              ),
+            )}
           </div>
+
+          <button
+            type="button"
+            className={styles.paginationButton}
+            onClick={() =>
+              setCurrentPage((page) => Math.min(totalPages, page + 1))
+            }
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
         </div>
-      ))}
+      )}
     </div>
   );
 }

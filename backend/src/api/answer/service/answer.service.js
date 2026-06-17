@@ -1,12 +1,6 @@
-
 import { safeExecute } from "../../../../db/config.js";
 
-import {
-  BadRequestError,
-  NotFoundError,
-} from "../../../utils/errors/index.js";
-
-
+import { BadRequestError, NotFoundError } from "../../../utils/errors/index.js";
 
 const mapAnswer = (row) => ({
   id: row.id,
@@ -20,8 +14,6 @@ const mapAnswer = (row) => ({
     lastName: row.lastName,
   },
 });
-
-
 
 export const getSingleAnswerService = async (answerId) => {
   const sql = `
@@ -49,6 +41,11 @@ export const getSingleAnswerService = async (answerId) => {
   return mapAnswer(rows[0]);
 };
 
+const getQuestionOwner = async (questionId) => {
+  const rows = await safeExecute(
+    `SELECT question_id, user_id FROM questions WHERE question_id = ? LIMIT 1`,
+    [questionId],
+  );
 
 const getQuestionOwner = async(questionId)=>{
     const rows = await safeExecute(
@@ -64,12 +61,14 @@ const getQuestionOwner = async(questionId)=>{
 
 
 
-export const createAnswerService = async ({questionId,userId,content})=>{
+  return rows[0];
+};
 
-const question = await getQuestionOwner(questionId)
-if(question.user_id === userId){
-    throw new BadRequestError("You cannot answer your own question")
-}
+export const createAnswerService = async ({ questionId, userId, content }) => {
+  const question = await getQuestionOwner(questionId);
+  if (question.user_id === userId) {
+    throw new BadRequestError("You cannot answer your own question");
+  }
 
 const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
 const result = await safeExecute(insertSql, [questionId, userId, content]);

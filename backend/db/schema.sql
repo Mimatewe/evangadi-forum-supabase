@@ -71,3 +71,56 @@ CREATE TABLE `answers` (
      INDEX `idx_answers_user_id` (`user_id`),
      INDEX `idx_answers_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- ============================================================
+-- RAG Tables
+-- ============================================================
+
+
+
+DROP TABLE IF EXISTS `documents`;
+CREATE TABLE `documents` (
+    `document_id`   INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id`       INT NOT NULL,
+    `title`         VARCHAR(255) NOT NULL,
+    `mime_type`     VARCHAR(100) NOT NULL DEFAULT 'application/pdf',
+    `byte_size`     INT NOT NULL DEFAULT 0,
+    `storage_path`  VARCHAR(500) NOT NULL,
+    `status`        ENUM('processing','ready','failed') NOT NULL DEFAULT 'processing',
+    `error_message` TEXT DEFAULT NULL,
+    `created_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+
+    INDEX `idx_documents_user_id` (`user_id`),
+    INDEX `idx_documents_status`  (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `document_chunks`;
+CREATE TABLE `document_chunks` (
+    `chunk_id`      INT AUTO_INCREMENT PRIMARY KEY,
+    `document_id`   INT NOT NULL,
+    `chunk_index`   INT NOT NULL,
+    `content`       TEXT NOT NULL,
+    `created_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (`document_id`) REFERENCES `documents` (`document_id`) ON DELETE CASCADE,
+
+    INDEX `idx_chunks_document_id` (`document_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `document_chunk_vectors`;
+CREATE TABLE `document_chunk_vectors` (
+    `vector_id`     INT AUTO_INCREMENT PRIMARY KEY,
+    `chunk_id`      INT NOT NULL,
+    `document_id`   INT NOT NULL,
+    `embedding`     LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL
+                    CHECK (json_valid(`embedding`)),
+    `created_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (`chunk_id`)    REFERENCES `document_chunks` (`chunk_id`)  ON DELETE CASCADE,
+    FOREIGN KEY (`document_id`) REFERENCES `documents`       (`document_id`) ON DELETE CASCADE,
+
+    INDEX `idx_chunk_vectors_document_id` (`document_id`),
+    INDEX `idx_chunk_vectors_chunk_id`    (`chunk_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

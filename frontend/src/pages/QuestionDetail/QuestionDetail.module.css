@@ -416,6 +416,12 @@
   color: #dc2626;
 }
 
+.postGateHint {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
 .postingBtn {
   margin-left: auto;
   background: #f97316;

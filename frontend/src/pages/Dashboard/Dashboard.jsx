@@ -20,7 +20,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
-
+import { TypeAnimation } from "react-type-animation";
 import styles from "./Dashboard.module.css";
 
 // ─── Author resolution ────────────────────────────────────────────────────────
@@ -110,11 +110,13 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const itemsPerPage = 8;
 
   // Full list from API — never mutated after fetch
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const firstName = user?.firstName?.trim();
   const welcomeLine = firstName
@@ -184,6 +186,23 @@ export default function Dashboard() {
     [questions, keywordParam],
   );
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil(visibleQuestions.length / itemsPerPage),
+  );
+  const paginatedQuestions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return visibleQuestions.slice(startIndex, startIndex + itemsPerPage);
+  }, [visibleQuestions, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [keywordParam, isSemanticMode]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
   // Metrics always reflect the visible (filtered) set
   const metrics = {
     questions: visibleQuestions.length,
@@ -203,7 +222,17 @@ export default function Dashboard() {
       {!isSemanticMode && !keywordParam && (
         <>
           <header className={styles["dashboard-header"]}>
-            <h1 className={styles["dashboard-welcome"]}>{welcomeLine}</h1>
+            <TypeAnimation
+              sequence={[
+                `Good to see you, ${firstName}.`,
+                2000,
+                "Ready to help your cohort today?",
+                2000,
+              ]}
+              speed={50}
+              repeat={Infinity}
+              className={styles["dashboard-welcome"]}
+            />
           </header>
 
           <section className={styles["quick-actions-grid"]}>
@@ -360,62 +389,115 @@ export default function Dashboard() {
               </p>
             </div>
           ) : (
-            <div className={styles["active-threads-list"]}>
-              {visibleQuestions.map((question) => {
-                const fInitial = question.author?.firstName?.charAt(0) || "";
-                const lInitial = question.author?.lastName?.charAt(0) || "";
-                const initials = `${fInitial}${lInitial}`.toUpperCase();
-                const fullName =
-                  `${question.author?.firstName || ""} ${question.author?.lastName || ""}`.trim();
-                const isUserThread = user?.id === question.author?.id;
+            <>
+              <div className={styles["active-threads-list"]}>
+                {paginatedQuestions.map((question) => {
+                  const fInitial = question.author?.firstName?.charAt(0) || "";
+                  const lInitial = question.author?.lastName?.charAt(0) || "";
+                  const initials = `${fInitial}${lInitial}`.toUpperCase();
+                  const fullName =
+                    `${question.author?.firstName || ""} ${question.author?.lastName || ""}`.trim();
+                  const isUserThread = user?.id === question.author?.id;
 
-                return (
-                  <div
-                    key={question.id}
-                    className={`${styles["thread-row"]} ${isUserThread ? styles["user-owned-thread"] : ""}`}
-                    onClick={() =>
-                      navigate(`/questions/${question.questionHash}`)
-                    }
-                  >
-                    <div className={styles["thread-left-layout"]}>
-                      <div
-                        className={styles["avatar-circle"]}
-                        aria-hidden="true"
-                      >
-                        {initials || "?"}
-                      </div>
+                  return (
+                    <div
+                      key={question.id}
+                      className={`${styles["thread-row"]} ${isUserThread ? styles["user-owned-thread"] : ""}`}
+                      onClick={() =>
+                        navigate(`/questions/${question.questionHash}`)
+                      }
+                    >
+                      <div className={styles["thread-left-layout"]}>
+                        <div
+                          className={styles["avatar-circle"]}
+                          aria-hidden="true"
+                        >
+                          {initials || "?"}
+                        </div>
 
-                      <div className={styles["thread-main-content"]}>
-                        <h4 className={styles["thread-row-title"]}>
-                          {question.title}
-                        </h4>
-                        <div className={styles["thread-meta-row"]}>
-                          <span>Posted by {fullName || "Anonymous"}</span>
-                          <span className={styles["meta-divider"]}>•</span>
-                          <span>
-                            {question.createdAt
-                              ? new Date(question.createdAt).toLocaleDateString(
-                                  undefined,
-                                  { month: "short", day: "numeric" },
-                                )
-                              : "Recent"}
-                          </span>
+                        <div className={styles["thread-main-content"]}>
+                          <h4 className={styles["thread-row-title"]}>
+                            {question.title}
+                          </h4>
+                          <div className={styles["thread-meta-row"]}>
+                            <span>Posted by {fullName || "Anonymous"}</span>
+                            <span className={styles["meta-divider"]}>•</span>
+                            <span>
+                              {question.createdAt
+                                ? new Date(
+                                    question.createdAt,
+                                  ).toLocaleDateString(undefined, {
+                                    month: "short",
+                                    day: "numeric",
+                                  })
+                                : "Recent"}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className={styles["thread-stats-badge"]}>
-                      <MessageSquare size={13} />
-                      <span>{question.answerCount || 0}</span>
-                      <ChevronRight
-                        size={14}
-                        className={styles["row-arrow-icon"]}
-                      />
+                      <div className={styles["thread-stats-badge"]}>
+                        <MessageSquare size={13} />
+                        <span>{question.answerCount || 0}</span>
+                        <ChevronRight
+                          size={14}
+                          className={styles["row-arrow-icon"]}
+                        />
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {totalPages > 1 && (
+                <div className={styles.paginationBar}>
+                  <button
+                    type="button"
+                    className={styles.paginationButton}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    Back
+                  </button>
+
+                  <div className={styles.paginationNumbers}>
+                    {Array.from(
+                      { length: totalPages },
+                      (_, index) => index + 1,
+                    ).map((pageNumber) => (
+                      <button
+                        key={pageNumber}
+                        type="button"
+                        className={`${styles.paginationNumber} ${
+                          pageNumber === currentPage
+                            ? styles.paginationNumberActive
+                            : ""
+                        }`}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        aria-current={
+                          pageNumber === currentPage ? "page" : undefined
+                        }
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+
+                  <button
+                    type="button"
+                    className={styles.paginationButton}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.min(totalPages, page + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
