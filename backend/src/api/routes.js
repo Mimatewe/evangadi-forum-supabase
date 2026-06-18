@@ -9,5 +9,5 @@ export const mainRoutes = express.Router();
 mainRoutes.use("/auth", authRoutes);
 mainRoutes.use("/questions", questionsRoutes);
 mainRoutes.use("/answers", answersRoutes);
-// mainRoutes.use("/rag", ragRoutes);
+mainRoutes.use("/rag", ragRoutes);
 export default mainRoutes;
