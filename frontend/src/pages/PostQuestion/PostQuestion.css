@@ -592,3 +592,33 @@
     padding-left: 2rem;
   }
 }
+
+
+/* everything under this is added separately */
+
+.strength-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.strength-badge.weak {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.strength-badge.average {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.strength-badge.strong {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.score-badge {
+  font-size: 13px;
+  font-weight: 700;
+}

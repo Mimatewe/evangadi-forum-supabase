@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../../services/core/api.client";
 import styles from "./MyQuestions.module.css";
@@ -45,15 +46,20 @@ export default function MyQuestions() {
     try {
       setIsLoading(true);
 
-      const offset = (page - 1) * itemsPerPage;
-      const response = await apiClient.get("/api/questions", {
-        params: { mine: true, limit: itemsPerPage, offset },
-      });
+      const token = localStorage.getItem("token");
 
-      setMyQuestions(
-        Array.isArray(response.data?.data) ? response.data.data : [],
+      const response = await axios.get(
+        "http://localhost:3777/api/questions?mine=true",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
-      setTotalCount(response.data?.meta?.total || 0);
+
+      console.log("My Questions Response:", response.data);
+
+      setMyQuestions(response.data.data || []);
     } catch (err) {
       console.error(err);
       setError("Failed to fetch questions.");
@@ -100,68 +106,61 @@ export default function MyQuestions() {
   }
 
   return (
-    <div className={styles.pageShell}>
-      <div className={styles.headerCard}>
-        <p className={styles.eyebrow}>Your workspace</p>
-        <div className={styles.headerRow}>
-          <div>
-            <h1 className={styles.pageTitle}>Your topics</h1>
-            <p className={styles.pageDescription}>
-              Only questions you created. Open one to read answers or add
-              follow-ups.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div
+      style={{
+        maxWidth: "900px",
+        margin: "40px auto",
+        padding: "20px",
+      }}
+    >
+      <h1
+        style={{
+          marginBottom: "10px",
+          fontSize: "2.25rem",
+        }}
+      >
+        My Questions
+      </h1>
 
-      <div className={styles.listCard}>
-        {myQuestions.map((question) => {
-          const author = resolveAuthor(question);
-          const fullName = `${author.firstName} ${author.lastName}`.trim();
+      <p
+        style={{
+          color: "#666",
+          marginBottom: "30px",
+        }}
+      >
+        View all questions you've posted and track community responses.
+      </p>
 
-          return (
-            <button
-              key={question.questionHash}
-              type="button"
-              className={styles.questionRow}
-              onClick={() => navigate(`/questions/${question.questionHash}`)}
-            >
-              <div className={styles.profileAvatar} aria-hidden="true">
-                {getInitials(author.firstName, author.lastName)}
-              </div>
+      {myQuestions.map((question) => (
+        <div
+          key={question.questionHash}
+          onClick={() => navigate(`/questions/${question.questionHash}`)}
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            padding: "20px",
+            marginBottom: "16px",
+            backgroundColor: "#fff",
+            cursor: "pointer",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+          }}
+        >
+          <h3
+            style={{
+              marginBottom: "10px",
+            }}
+          >
+            {question.title}
+          </h3>
 
-              <div className={styles.questionContent}>
-                <div className={styles.questionTopLine}>
-                  <div className={styles.profileMeta}>
-                    <span className={styles.profileName}>
-                      {fullName || "Anonymous"}
-                    </span>
-                    <span className={styles.profileRole}>Learner</span>
-                  </div>
-                  <span className={styles.questionDate}>
-                    {formatDate(question.createdAt)}
-                  </span>
-                </div>
-
-                <h3 className={styles.questionTitle}>{question.title}</h3>
-
-                <p className={styles.questionExcerpt}>
-                  {question.content?.slice(0, 180)}
-                  {question.content && question.content.length > 180
-                    ? "..."
-                    : ""}
-                </p>
-
-                <div className={styles.questionFooter}>
-                  <span className={styles.replyCount}>
-                    {question.answerCount || 0} Replies
-                  </span>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+          <p
+            style={{
+              color: "#555",
+              lineHeight: "1.6",
+            }}
+          >
+            {question.content?.slice(0, 180)}...
+          </p>
 
       {totalPages > 1 && (
         <div className={styles.paginationBar}>

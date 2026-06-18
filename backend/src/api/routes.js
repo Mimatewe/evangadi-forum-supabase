@@ -2,7 +2,6 @@ import express from "express";
 import authRoutes from "../api/auth/routes/auth.routes.js";
 
 import questionsRoutes from "./question/routes/question.route.js";
-import ragRoutes from "./rag/routes/rag.routes.js";
 import answersRoutes from "./answer/routes/answer.route.js";
 
 export const mainRoutes = express.Router();
