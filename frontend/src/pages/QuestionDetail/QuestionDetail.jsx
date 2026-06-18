@@ -59,6 +59,7 @@ export default function QuestionDetail() {
   const [postError, setPostError] = useState(null);
   const [fitResult, setFitResult] = useState(null); // { level, note }
   const [isChecking, setIsChecking] = useState(false);
+  const canPostAnswer = fitResult?.level === "strong";
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -92,8 +93,11 @@ export default function QuestionDetail() {
       setPostError(null);
       const token = localStorage.getItem("token");
       const { data } = await axios.post(
-        `http://localhost:3777/api/questions/${questionHash}/answers`,
-        { content: answerText.trim() },
+        `http://localhost:3777/api/answers`,
+        {
+          questionId: question.id,
+          content: answerText.trim(),
+        },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const newAnswer = data.answer ?? data.data;
@@ -305,7 +309,10 @@ export default function QuestionDetail() {
                 className={styles.answerTextarea}
                 placeholder="Write your answer here..."
                 value={answerText}
-                onChange={(e) => setAnswerText(e.target.value)}
+                onChange={(e) => {
+                  setAnswerText(e.target.value);
+                  setFitResult(null);
+                }}
                 rows={6}
               />
 
@@ -340,14 +347,20 @@ export default function QuestionDetail() {
                 {postError && (
                   <span className={styles.postError}>{postError}</span>
                 )}
-                <button
-                  type="button"
-                  className={styles.postingBtn}
-                  onClick={handlePostAnswer}
-                  disabled={isPosting || answerText.trim().length < 20}
-                >
-                  {isPosting ? "Posting…" : "Post Answer"}
-                </button>
+                {canPostAnswer ? (
+                  <button
+                    type="button"
+                    className={styles.postingBtn}
+                    onClick={handlePostAnswer}
+                    disabled={isPosting || answerText.trim().length < 20}
+                  >
+                    {isPosting ? "Posting…" : "Post Answer"}
+                  </button>
+                ) : (
+                  <span className={styles.postGateHint}>
+                    Post Answer appears only after a strong-fit check.
+                  </span>
+                )}
               </div>
             </div>
           )}

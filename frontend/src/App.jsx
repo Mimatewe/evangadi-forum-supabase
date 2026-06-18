@@ -13,6 +13,8 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import Landing from "./pages/Landing/Landing";
 import PostQuestion from "./pages/PostQuestion/PostQuestion.jsx";
 import QuestionDetail from "./pages/QuestionDetail/QuestionDetail";
+import MyQuestions from "./pages/MyQuestions/MyQuestions";
+import RagDocuments from "./components/RagAnswerBody/RagAnswerBody.jsx";
 
 import MyQuestions from "./pages/MyQuestions/MyQuestions";
 
@@ -68,7 +70,7 @@ function App() {
               path="/rag-documents"
               element={
                 <ProtectedRoute>
-                  <h1>RAG Documents Page</h1>
+                 <RagDocuments/>
                 </ProtectedRoute>
               }
             />

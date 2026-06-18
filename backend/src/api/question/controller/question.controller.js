@@ -43,6 +43,8 @@ export const getQuestionsController = async (req, res, next) => {
       search: req.query.search,
       mine: req.query.mine,
       userId: req.user.id,
+      limit: req.query.limit ? Number(req.query.limit) : 100,
+      offset: req.query.offset ? Number(req.query.offset) : 0,
     };
 
     const result = await getQuestionsService(filters);

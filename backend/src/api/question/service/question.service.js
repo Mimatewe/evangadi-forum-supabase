@@ -123,59 +123,77 @@ const buildQuestionFilters = (filters) => {
   };
 };
 export const getQuestionsService = async (filters) => {
-  const normalizedLimit = 100; // Fixed max 100 records
+  const normalizedLimit = Math.min(filters.limit || 100, 100); // Cap at 100
+  const normalizedOffset = filters.offset || 0;
   const sortColumn = "q.created_at";
   const normalizedSortOrder = "DESC";
 
   const { whereClause, params } = buildQuestionFilters(filters);
 
+  // Get total count for pagination metadata
+  const countSql = `
+    SELECT COUNT(DISTINCT q.question_id) AS totalCount
+    FROM questions q
+    JOIN users u ON u.user_id = q.user_id
+    ${whereClause}
+  `;
+
+  const countRows = await safeExecute(countSql, params);
+  const totalCount = countRows[0]?.totalCount || 0;
+
+  // Get paginated results
   const listSql = `
-        SELECT
-            q.question_id AS id,
-            q.question_hash AS questionHash,
-            q.title,
-            q.content,
-            q.created_at AS createdAt,
-            q.updated_at AS updatedAt,
-            u.user_id AS userId,
-            u.first_name AS firstName,
-            u.last_name AS lastName,
-            COUNT(DISTINCT a.answer_id) AS answerCount
-        FROM questions q
-        JOIN users u ON u.user_id = q.user_id
-        LEFT JOIN answers a ON a.question_id = q.question_id
-        ${whereClause}
-        GROUP BY q.question_id, u.user_id
-        ORDER BY ${sortColumn} ${normalizedSortOrder}
-        LIMIT ${normalizedLimit}
-    `;
+    SELECT
+        q.question_id AS id,
+        q.question_hash AS questionHash,
+        q.title,
+        q.content,
+        q.created_at AS createdAt,
+        q.updated_at AS updatedAt,
+        u.user_id AS userId,
+        u.first_name AS firstName,
+        u.last_name AS lastName,
+        COUNT(DISTINCT a.answer_id) AS answerCount
+    FROM questions q
+    JOIN users u ON u.user_id = q.user_id
+    LEFT JOIN answers a ON a.question_id = q.question_id
+    ${whereClause}
+    GROUP BY q.question_id, u.user_id
+    ORDER BY ${sortColumn} ${normalizedSortOrder}
+    LIMIT ? OFFSET ?
+  `;
 
-  const rows = await safeExecute(listSql, params);
+  const rows = await safeExecute(listSql, [
+    ...params,
+    normalizedLimit,
+    normalizedOffset,
+  ]);
 
- return {
-   data: rows.map((question) => ({
-     id: question.id,
-     questionHash: question.questionHash,
-     title: question.title,
-     content: question.content,
-     answerCount: question.answerCount,
-     createdAt: question.createdAt,
-     updatedAt: question.updatedAt,
+  return {
+    data: rows.map((question) => ({
+      id: question.id,
+      questionHash: question.questionHash,
+      title: question.title,
+      content: question.content,
+      answerCount: question.answerCount,
+      createdAt: question.createdAt,
+      updatedAt: question.updatedAt,
 
-     author: {
-       id: question.userId,
-       firstName: question.firstName,
-       lastName: question.lastName,
-     },
-   })),
+      author: {
+        id: question.userId,
+        firstName: question.firstName,
+        lastName: question.lastName,
+      },
+    })),
 
-   meta: {
-     limit: 100,
-     total: rows.length,
-     sortBy: "newest",
-     sortOrder: "desc",
-   },
- };
+    meta: {
+      limit: normalizedLimit,
+      offset: normalizedOffset,
+      total: totalCount,
+      sortBy: "newest",
+      sortOrder: "desc",
+    },
+  };
 };
 
 export const getSingleQuestionService = async ({ questionHash }) => {
@@ -260,7 +278,7 @@ export const searchQuestionsSemanticService = async ({
 export const getSimilarQuestionsService = async ({
   questionHash,
   k = 5,
-  threshold, 
+  threshold,
 }) => {
   const vectorConfig = getVectorConfig();
   const searchThreshold =

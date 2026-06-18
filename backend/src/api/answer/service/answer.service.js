@@ -1,5 +1,6 @@
-import { BadRequestError, NotFoundError } from "../../../utils/errors/index.js";
 import { safeExecute } from "../../../../db/config.js";
+
+import { BadRequestError, NotFoundError } from "../../../utils/errors/index.js";
 
 const mapAnswer = (row) => ({
   id: row.id,
@@ -45,10 +46,26 @@ const getQuestionOwner = async (questionId) => {
     `SELECT question_id, user_id FROM questions WHERE question_id = ? LIMIT 1`,
     [questionId],
   );
-  if (rows.length === 0) {
-    throw new NotFoundError("Question not found");
-  }
 
+const getQuestionOwner = async(questionId)=>{
+    const rows = await safeExecute(
+      `SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,
+      [questionId],
+    );
+    if (rows.length === 0) {
+      throw new NotFoundError("Question not found");
+    }
+
+    return rows[0];
+}
+
+
+
+export const createAnswerService = async ({ questionId, userId, content }) => {
+  const question = await getQuestionOwner(questionId);
+  if (question.user_id === userId) {
+    throw new BadRequestError("You cannot answer your own question");
+  }
   return rows[0];
 };
 
