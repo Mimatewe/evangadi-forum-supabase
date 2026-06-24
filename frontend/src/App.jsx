@@ -65,12 +65,20 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/my-answers"
+              element={
+                <ProtectedRoute>
+                  <MyAnswers />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/rag-documents"
               element={
                 <ProtectedRoute>
-                 <RagDocuments/>
+                  <RagDocuments />
                 </ProtectedRoute>
               }
             />
