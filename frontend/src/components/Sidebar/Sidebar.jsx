@@ -1,5 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, MessageSquare, FileText } from 'lucide-react';
+import {
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  FileText,
+  MessageCircle,
+} from "lucide-react";
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './Sidebar.module.css';
 
@@ -8,9 +14,10 @@ import styles from './Sidebar.module.css';
  * Add rows here when you ship new sections (e.g. Admin, Bookmarks).
  */
 const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Home', path: '/dashboard' },
-  { icon: MessageSquare, label: 'Your Topics', path: '/my-questions' },
-  { icon: FileText, label: 'Knowledge Base', path: '/rag-documents' },
+  { icon: LayoutDashboard, label: "Home", path: "/dashboard" },
+  { icon: MessageSquare, label: "Your Topics", path: "/my-questions" },
+  { icon: FileText, label: "Knowledge Base", path: "/rag-documents" },
+  { icon: MessageCircle, label: "Your Answers", path: "/my-answers" },
 ];
 
 export default function Sidebar() {
