@@ -1,48 +1,22 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { apiClient } from "../../services/core/api.client";
 import styles from "./MyQuestions.module.css";
-
-function getInitials(firstName, lastName) {
-  return (
-    `${firstName?.charAt(0) ?? ""}${lastName?.charAt(0) ?? ""}`.toUpperCase() ||
-    "?"
-  );
-}
-
-function formatDate(iso) {
-  if (!iso) return "Recent";
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function resolveAuthor(question) {
-  const author = question.author ?? {};
-  return {
-    firstName: author.firstName ?? question.firstName ?? "",
-    lastName: author.lastName ?? question.lastName ?? "",
-  };
-}
 
 export default function MyQuestions() {
   const [myQuestions, setMyQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
 
   const navigate = useNavigate();
   const itemsPerPage = 7;
 
   useEffect(() => {
-    fetchMyQuestions(currentPage);
-  }, [currentPage]);
+    fetchMyQuestions();
+  }, []);
 
-  const fetchMyQuestions = async (page) => {
+  const fetchMyQuestions = async () => {
     try {
       setIsLoading(true);
 
@@ -68,7 +42,13 @@ export default function MyQuestions() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const totalPages = Math.ceil(myQuestions.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentQuestions = myQuestions.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   if (isLoading) {
     return (
@@ -131,7 +111,7 @@ export default function MyQuestions() {
         View all questions you've posted and track community responses.
       </p>
 
-      {myQuestions.map((question) => (
+      {currentQuestions.map((question) => (
         <div
           key={question.questionHash}
           onClick={() => navigate(`/questions/${question.questionHash}`)}
@@ -159,8 +139,11 @@ export default function MyQuestions() {
               lineHeight: "1.6",
             }}
           >
-            {question.content?.slice(0, 180)}...
+            {question.content?.slice(0, 180)}
+            {question.content?.length > 180 ? "..." : ""}
           </p>
+        </div>
+      ))}
 
       {totalPages > 1 && (
         <div className={styles.paginationBar}>
@@ -185,7 +168,6 @@ export default function MyQuestions() {
                       : ""
                   }`}
                   onClick={() => setCurrentPage(pageNumber)}
-                  aria-current={pageNumber === currentPage ? "page" : undefined}
                 >
                   {pageNumber}
                 </button>

@@ -69,28 +69,10 @@ router.post(
   generateQuestionDraftCoachValidation,
   generateQuestionDraftCoachController,
 );
-/**
- * @route GET /api/questions/:questionHash/similar
- * @desc Get similar questions based on a question hash
- * @access Private
- */
-router.get(
-  "/:questionHash/similar",
-  authenticateUser,
-  getSimilarQuestionsValidation,
-  getSimilarQuestionsController,
-);
-/**
- * @route GET /api/questions/:questionHash
- * @desc Get a single question by hash
- * @access Private
- */
-router.get(
-  "/:questionHash",
-  authenticateUser,
-  getSingleQuestionValidation,
-  getSingleQuestionController,
-);
+
+router.get("/", authenticateUser, getQuestionsController);
+
+router.get("/:questionHash", authenticateUser, getSingleQuestionController);
 
 /**
  * @route POST /api/questions/:questionHash/answer-fit

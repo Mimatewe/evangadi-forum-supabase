@@ -15,8 +15,7 @@ import PostQuestion from "./pages/PostQuestion/PostQuestion.jsx";
 import QuestionDetail from "./pages/QuestionDetail/QuestionDetail";
 import MyQuestions from "./pages/MyQuestions/MyQuestions";
 import RagDocuments from "./components/RagAnswerBody/RagAnswerBody.jsx";
-
-import MyQuestions from "./pages/MyQuestions/MyQuestions";
+import MyAnswers from "./pages/MyAnswers/MyAnswers.jsx";
 
 function App() {
   return (

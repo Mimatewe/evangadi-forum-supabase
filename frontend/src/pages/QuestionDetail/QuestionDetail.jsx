@@ -60,7 +60,8 @@ export default function QuestionDetail() {
   const [fitResult, setFitResult] = useState(null); // { level, note }
   const [isChecking, setIsChecking] = useState(false);
   const canPostAnswer = fitResult?.level === "strong";
-
+  const [relatedQuestions, setRelatedQuestions] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
@@ -85,6 +86,26 @@ export default function QuestionDetail() {
 
     if (questionHash) fetchQuestion();
   }, [questionHash]);
+useEffect(() => {
+  const fetchRelated = async () => {
+    try {
+      setRelatedLoading(true);
+      const token = localStorage.getItem("token");
+      const { data } = await axios.get(
+        `http://localhost:3777/api/questions/${questionHash}/similar`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setRelatedQuestions(data.data ?? []);
+    } catch (err) {
+      console.error("Failed to load related questions:", err);
+      setRelatedQuestions([]);
+    } finally {
+      setRelatedLoading(false);
+    }
+  };
+
+  if (questionHash) fetchRelated();
+}, [questionHash]);
 
   const handlePostAnswer = async () => {
     if (answerText.trim().length < 20) return;
@@ -369,7 +390,25 @@ export default function QuestionDetail() {
         {/* ── Sidebar ────────────────────────────────────────────────────── */}
         <aside className={styles.sidebar}>
           <h3 className={styles.sidebarHeading}>Related Questions</h3>
-          <p className={styles.emptyRelated}>Related questions coming soon.</p>
+          {relatedLoading ? (
+            <p className={styles.emptyRelated}>Loading…</p>
+          ) : relatedQuestions.length === 0 ? (
+            <p className={styles.emptyRelated}>No related questions found.</p>
+          ) : (
+            <ul className={styles.relatedList}>
+              {relatedQuestions.map((rq) => (
+                <li key={rq.id ?? rq.questionId} className={styles.relatedItem}>
+                  <button
+                    type="button"
+                    className={styles.relatedTitle}
+                    onClick={() => navigate(`/questions/${rq.questionHash}`)}
+                  >
+                    {rq.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </aside>
       </div>
     </div>
