@@ -19,10 +19,10 @@ CREATE TABLE `users` (
 DROP TABLE IF EXISTS `questions`;
 CREATE TABLE `questions` (
     `question_id` INT AUTO_INCREMENT PRIMARY KEY,
-    `question_hash` CHAR(16) NOT NULL UNIQUE, -- Used for /question/:hash routing
+    `question_hash` CHAR(16) NOT NULL UNIQUE,
     `user_id` INT NOT NULL,
     `title` VARCHAR(255) NOT NULL,
-    `content` TEXT NOT NULL, -- Detailed content including code sections
+    `content` TEXT NOT NULL, 
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CHECK (CHAR_LENGTH(`title`) >= 5),
@@ -33,7 +33,6 @@ CREATE TABLE `questions` (
     INDEX `idx_questions_user_id` (`user_id`),
     INDEX `idx_questions_created_at` (`created_at`),
 
-    -- Full-text search index for exact match search mode
     FULLTEXT KEY `ft_questions_search` (`title`, `content`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -60,7 +59,7 @@ CREATE TABLE `answers` (
      `answer_id` INT AUTO_INCREMENT PRIMARY KEY,
      `question_id` INT NOT NULL,
      `user_id` INT NOT NULL,
-     `content` TEXT NOT NULL, -- Content including code sections
+     `content` TEXT NOT NULL, 
      `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
  

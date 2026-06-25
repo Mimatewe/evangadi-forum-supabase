@@ -257,7 +257,10 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className={styles["action-card"]}>
+            <div
+              className={`${styles["action-card"]} ${styles["cursor-pointer"]}`}
+              onClick={() => navigate("/my-questions")}
+            >
               <div
                 className={styles["action-icon-wrapper"]}
                 style={{ color: "#d97706", backgroundColor: "#fef3c7" }}
@@ -272,7 +275,10 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className={styles["action-card"]}>
+            <div
+              className={`${styles["action-card"]} ${styles["cursor-pointer"]}`}
+              onClick={() => navigate("/rag-documents")}
+            >
               <div
                 className={styles["action-icon-wrapper"]}
                 style={{ color: "#ea580c", backgroundColor: "#fff7ed" }}
