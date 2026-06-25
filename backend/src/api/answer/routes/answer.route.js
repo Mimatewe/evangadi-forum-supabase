@@ -25,7 +25,7 @@ answerRoutes.post(
 
 answerRoutes.get("/myAnswer", authenticateUser, getAnswerController);
 
-answerRoute.delete(
+answerRoutes.delete(
   "/:answerId",
   authenticateUser,
   validateAnswerIdParam,
