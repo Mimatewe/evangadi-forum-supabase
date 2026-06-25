@@ -257,6 +257,23 @@ export default function Dashboard() {
               </div>
             </div>
 
+           <div
+  className={`${styles["action-card"]} ${styles["cursor-pointer"]}`}
+  onClick={() => navigate("/my-questions")}
+>
+  <div
+    className={styles["action-icon-wrapper"]}
+    style={{ color: "#d97706", backgroundColor: "#fef3c7" }}
+  >
+    <Layers size={18} />
+  </div>
+  <div className={styles["action-details"]}>
+    <h3 className={styles["action-title"]}>Your topics</h3>
+    <p className={styles["action-desc"]}>
+      Filtered list of threads you authored
+    </p>
+  </div>
+</div>
             <div
               className={`${styles["action-card"]} ${styles["cursor-pointer"]}`}
               onClick={() => navigate("/my-questions")}
@@ -275,6 +292,24 @@ export default function Dashboard() {
               </div>
             </div>
 
+          <div
+  className={`${styles["action-card"]} ${styles["cursor-pointer"]}`}
+  onClick={() => navigate("/rag-documents")}
+>
+  <div
+    className={styles["action-icon-wrapper"]}
+    style={{ color: "#ea580c", backgroundColor: "#fff7ed" }}
+  >
+    <BookOpen size={18} />
+  </div>
+  <div className={styles["action-details"]}>
+    <h3 className={styles["action-title"]}>Knowledge base</h3>
+    <p className={styles["action-desc"]}>
+      Course library, uploads, and retrieval-backed context for
+      threads
+    </p>
+  </div>
+</div>
             <div
               className={`${styles["action-card"]} ${styles["cursor-pointer"]}`}
               onClick={() => navigate("/rag-documents")}
