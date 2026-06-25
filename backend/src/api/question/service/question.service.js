@@ -195,7 +195,6 @@ export const getQuestionsService = async (filters) => {
     },
   };
 };
-
 export const getSingleQuestionService = async ({ questionHash }) => {
   const sql = `
         SELECT
@@ -223,6 +222,27 @@ export const getSingleQuestionService = async ({ questionHash }) => {
   }
 
   const row = rows[0];
+
+  // NEW: fetch the actual answers for this question
+  const answerRows = await safeExecute(
+    `
+    SELECT
+      a.answer_id AS id,
+      a.question_id AS questionId,
+      a.content,
+      a.created_at AS createdAt,
+      a.updated_at AS updatedAt,
+      u.user_id AS userId,
+      u.first_name AS firstName,
+      u.last_name AS lastName
+    FROM answers a
+    JOIN users u ON u.user_id = a.user_id
+    WHERE a.question_id = ?
+    ORDER BY a.created_at ASC
+    `,
+    [row.id],
+  );
+
   return {
     question: {
       id: row.id,
@@ -235,6 +255,7 @@ export const getSingleQuestionService = async ({ questionHash }) => {
       firstName: row.firstName,
       lastName: row.lastName,
       answerCount: row.answerCount,
+      answers: answerRows, // NEW
     },
   };
 };

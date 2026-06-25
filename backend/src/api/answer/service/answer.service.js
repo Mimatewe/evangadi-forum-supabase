@@ -2,17 +2,27 @@ import { safeExecute } from "../../../../db/config.js";
 
 import { BadRequestError, NotFoundError } from "../../../utils/errors/index.js";
 
+// const mapAnswer = (row) => ({
+//   id: row.id,
+//   questionId: row.questionId,
+//   content: row.content,
+//   createdAt: row.createdAt,
+//   updatedAt: row.updatedAt,
+//   author: {
+//     id: row.userId,
+//     firstName: row.firstName,
+//     lastName: row.lastName,
+//   },
+// });
 const mapAnswer = (row) => ({
   id: row.id,
   questionId: row.questionId,
   content: row.content,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
-  author: {
-    id: row.userId,
-    firstName: row.firstName,
-    lastName: row.lastName,
-  },
+  userId: row.userId,
+  firstName: row.firstName,
+  lastName: row.lastName,
 });
 
 const getSingleAnswerService = async (answerId) => {
