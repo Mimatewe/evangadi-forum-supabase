@@ -173,6 +173,50 @@
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
 }
 
+.tag-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tag-input-row .form-input {
+  flex: 1;
+}
+
+.tag-add-button {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #ea580c;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tag-add-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tag-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.tag-chip {
+  border: 1px solid #ffedd5;
+  background: #fff7ed;
+  color: #c2410c;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* =========================
    TEXTAREA EDITOR
 ========================= */

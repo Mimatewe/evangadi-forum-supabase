@@ -63,6 +63,48 @@ const getQuestionOwner = async (questionId) => {
   return rows[0];
 };
 
+const getAnswerWithQuestionOwner = async (answerId) => {
+  const rows = await safeExecute(
+    `
+    SELECT
+      a.answer_id AS answerId,
+      a.user_id AS answerUserId,
+      a.question_id AS questionId,
+      q.user_id AS questionOwnerId,
+      q.accepted_answer_id AS acceptedAnswerId
+    FROM answers a
+    JOIN questions q ON q.question_id = a.question_id
+    WHERE a.answer_id = ?
+    LIMIT 1
+    `,
+    [answerId],
+  );
+
+  if (rows.length === 0) {
+    throw new NotFoundError("Answer not found");
+  }
+
+  return rows[0];
+};
+
+const getAnswerVoteMeta = async (answerId, userId) => {
+  const rows = await safeExecute(
+    `
+    SELECT
+      COALESCE(SUM(value), 0) AS voteScore,
+      MAX(CASE WHEN user_id = ? THEN value ELSE NULL END) AS currentUserVote
+    FROM answer_votes
+    WHERE answer_id = ?
+    `,
+    [userId, answerId],
+  );
+
+  return {
+    voteScore: Number(rows[0]?.voteScore || 0),
+    currentUserVote: rows[0]?.currentUserVote ?? null,
+  };
+};
+
 export const createAnswerService = async ({ questionId, userId, content }) => {
   const question = await getQuestionOwner(questionId);
   if (question.user_id === userId) {
@@ -166,4 +208,50 @@ export const updateAnswerService = async (answerId, userId, newContent) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const voteAnswerService = async ({ answerId, userId, value }) => {
+  const answer = await getAnswerWithQuestionOwner(answerId);
+  if (answer.answerUserId === userId) {
+    throw new BadRequestError("You cannot vote on your own answer");
+  }
+
+  await safeExecute(
+    `
+    INSERT INTO answer_votes (answer_id, user_id, value)
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE value = VALUES(value)
+    `,
+    [answerId, userId, value],
+  );
+
+  return getAnswerVoteMeta(answerId, userId);
+};
+
+export const clearAnswerVoteService = async ({ answerId, userId }) => {
+  await getAnswerWithQuestionOwner(answerId);
+  await safeExecute("DELETE FROM answer_votes WHERE answer_id = ? AND user_id = ?", [
+    answerId,
+    userId,
+  ]);
+
+  return getAnswerVoteMeta(answerId, userId);
+};
+
+export const acceptAnswerService = async ({ answerId, userId }) => {
+  const answer = await getAnswerWithQuestionOwner(answerId);
+  if (answer.questionOwnerId !== userId) {
+    throw new BadRequestError("Only the question owner can accept an answer");
+  }
+
+  await safeExecute(
+    "UPDATE questions SET accepted_answer_id = ? WHERE question_id = ?",
+    [answerId, answer.questionId],
+  );
+
+  return {
+    answerId,
+    questionId: answer.questionId,
+    acceptedAnswerId: answerId,
+  };
 };

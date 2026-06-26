@@ -92,6 +92,7 @@ function matchesKeyword(question, term) {
   if (!term) return true;
   const haystack = [
     question.title ?? "",
+    ...(question.tags ?? []),
     question.author?.firstName ?? "",
     question.author?.lastName ?? "",
   ]
@@ -125,10 +126,12 @@ export default function Dashboard() {
 
   // ─── URL param helpers ────────────────────────────────────────────────────
   const activeParams = new URLSearchParams(location.search);
-  const isFiltered = activeParams.has("q") || activeParams.has("semantic");
+  const isFiltered =
+    activeParams.has("q") || activeParams.has("semantic") || activeParams.has("tag");
   const isSemanticMode = activeParams.has("semantic");
   const keywordParam = activeParams.get("q") ?? "";
-  const currentQueryText = activeParams.get("semantic") || keywordParam;
+  const tagParam = activeParams.get("tag") ?? "";
+  const currentQueryText = activeParams.get("semantic") || keywordParam || `#${tagParam}`;
 
   // ─── Fetch ────────────────────────────────────────────────────────────────
   // For keyword search we always fetch the full list and filter client-side.
@@ -145,9 +148,12 @@ export default function Dashboard() {
         );
 
         // Only call the vector endpoint for semantic; everything else → base URL
+        const queryParams = new URLSearchParams();
+        if (tagParam) queryParams.set("tag", tagParam);
+
         const targetUrl = semanticQuery
           ? `http://localhost:3777/api/questions/search?query=${encodeURIComponent(semanticQuery)}`
-          : "http://localhost:3777/api/questions";
+          : `http://localhost:3777/api/questions${queryParams.toString() ? `?${queryParams}` : ""}`;
 
         const response = await axios.get(targetUrl, {
           headers: { Authorization: `Bearer ${token}` },
@@ -177,7 +183,7 @@ export default function Dashboard() {
     //   • switching between keyword mode and semantic mode  (isSemanticMode changes)
     //   • the semantic query itself changes                 (semanticQuery changes)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSemanticMode, isSemanticMode && activeParams.get("semantic")]);
+  }, [isSemanticMode, isSemanticMode && activeParams.get("semantic"), tagParam]);
 
   // ─── Client-side filtered list ────────────────────────────────────────────
   // Recalculated on every keystroke via the URL param — zero API calls.
@@ -219,7 +225,7 @@ export default function Dashboard() {
   return (
     <div className={`${styles["dashboard-container"]} font-sans text-gray-800`}>
       {/* Top sections — hidden during AI Search or keyword filtering */}
-      {!isSemanticMode && !keywordParam && (
+      {!isSemanticMode && !keywordParam && !tagParam && (
         <>
           <header className={styles["dashboard-header"]}>
             <TypeAnimation
@@ -426,6 +432,8 @@ export default function Dashboard() {
               <p className={styles["empty-state-text"]}>
                 {keywordParam
                   ? `No questions match "${keywordParam}".`
+                  : tagParam
+                    ? `No questions tagged #${tagParam}.`
                   : "No questions found."}
               </p>
             </div>
@@ -460,6 +468,23 @@ export default function Dashboard() {
                           <h4 className={styles["thread-row-title"]}>
                             {question.title}
                           </h4>
+                          {question.tags?.length > 0 && (
+                            <div className={styles["thread-tags-row"]}>
+                              {question.tags.map((tag) => (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  className={styles["thread-tag"]}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    navigate(`/dashboard?tag=${encodeURIComponent(tag)}`);
+                                  }}
+                                >
+                                  #{tag}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                           <div className={styles["thread-meta-row"]}>
                             <span>Posted by {fullName || "Anonymous"}</span>
                             <span className={styles["meta-divider"]}>•</span>

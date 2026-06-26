@@ -5,6 +5,9 @@ import {
   getAnswerService,
   deleteAnswerService,
   updateAnswerService,
+  voteAnswerService,
+  clearAnswerVoteService,
+  acceptAnswerService,
 } from "../service/answer.service.js";
 
 // -------------------
@@ -96,6 +99,62 @@ export const updateAnswerController = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const voteAnswerController = async (req, res, next) => {
+  try {
+    const { answerId } = req.params;
+    const { value } = req.body;
+    const result = await voteAnswerService({
+      answerId,
+      userId: req.user.id,
+      value,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Vote saved successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const clearAnswerVoteController = async (req, res, next) => {
+  try {
+    const { answerId } = req.params;
+    const result = await clearAnswerVoteService({
+      answerId,
+      userId: req.user.id,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Vote cleared successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const acceptAnswerController = async (req, res, next) => {
+  try {
+    const { answerId } = req.params;
+    const result = await acceptAnswerService({
+      answerId,
+      userId: req.user.id,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Answer accepted successfully",
+      data: result,
     });
   } catch (error) {
     next(error);

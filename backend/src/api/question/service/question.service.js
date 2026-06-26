@@ -12,6 +12,72 @@ import {
 
 const generateQuestionHash = () => crypto.randomBytes(8).toString("hex");
 
+const normalizeTagName = (tag) =>
+  String(tag || "")
+    .trim()
+    .replace(/^#/, "")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+const normalizeTags = (tags = []) => {
+  if (!Array.isArray(tags)) return [];
+
+  return [...new Set(tags.map(normalizeTagName))]
+    .filter((tag) => /^[a-z0-9][a-z0-9-]{1,39}$/.test(tag))
+    .slice(0, 5);
+};
+
+const attachTagsToQuestion = async (questionId, tags = []) => {
+  const normalizedTags = normalizeTags(tags);
+  if (normalizedTags.length === 0) return [];
+
+  for (const tagName of normalizedTags) {
+    await safeExecute("INSERT IGNORE INTO tags (name) VALUES (?)", [tagName]);
+
+    const tagRows = await safeExecute(
+      "SELECT tag_id AS tagId FROM tags WHERE name = ? LIMIT 1",
+      [tagName],
+    );
+    const tagId = tagRows[0]?.tagId;
+
+    console.log("TAG SAVE:", { tagName, tagId, questionId });
+
+    if (!tagId) {
+      throw new BadRequestError(`Could not save tag: ${tagName}`);
+    }
+
+    await safeExecute(
+      "INSERT IGNORE INTO question_tags (question_id, tag_id) VALUES (?, ?)",
+      [questionId, tagId],
+    );
+  }
+
+  return normalizedTags;
+};
+
+const getTagsForQuestions = async (questionIds = []) => {
+  if (questionIds.length === 0) return new Map();
+
+  const placeholders = questionIds.map(() => "?").join(",");
+  const rows = await safeExecute(
+    `
+    SELECT qt.question_id AS questionId, t.name
+    FROM question_tags qt
+    JOIN tags t ON t.tag_id = qt.tag_id
+    WHERE qt.question_id IN (${placeholders})
+    ORDER BY t.name ASC
+    `,
+    questionIds,
+  );
+
+  const tagsByQuestion = new Map(questionIds.map((id) => [id, []]));
+  rows.forEach((row) => {
+    tagsByQuestion.get(row.questionId)?.push(row.name);
+  });
+
+  return tagsByQuestion;
+};
+
 /**
  * Creates a new question and stores its vector embedding for semantic search.
  * @param {Object} payload - The question data
@@ -22,7 +88,7 @@ const generateQuestionHash = () => crypto.randomBytes(8).toString("hex");
  */
 export const createQuestionWithVectorService = async (payload) => {
   // Extract required fields from the payload
-  const { userId, title, content } = payload;
+  const { userId, title, content, tags = [] } = payload;
 
   // Prepare the SQL statement for inserting a new question
   const insertQuestionSql =
@@ -51,6 +117,7 @@ export const createQuestionWithVectorService = async (payload) => {
 
   // Retrieve the auto-generated ID of the newly inserted question
   const questionId = questionResult.insertId;
+  console.log("QUESTION ID:", questionId);
 
   // Construct the result object representing the created question
   const creationResult = {
@@ -59,6 +126,7 @@ export const createQuestionWithVectorService = async (payload) => {
     title,
     content,
     userId,
+    tags: await attachTagsToQuestion(questionId, tags),
   };
 
   // Normalize the question text (e.g., title) to prepare it for vector embedding
@@ -113,6 +181,18 @@ const buildQuestionFilters = (filters) => {
     params.push(filters.userId);
   }
 
+  if (filters.tag) {
+    conditions.push(`
+      EXISTS (
+        SELECT 1
+        FROM question_tags qt
+        JOIN tags t ON t.tag_id = qt.tag_id
+        WHERE qt.question_id = q.question_id AND t.name = ?
+      )
+    `);
+    params.push(normalizeTagName(filters.tag));
+  }
+
   if (conditions.length === 0) {
     return { whereClause: "", params };
   }
@@ -148,6 +228,7 @@ export const getQuestionsService = async (filters) => {
         q.question_hash AS questionHash,
         q.title,
         q.content,
+        q.accepted_answer_id AS acceptedAnswerId,
         q.created_at AS createdAt,
         q.updated_at AS updatedAt,
         u.user_id AS userId,
@@ -169,12 +250,16 @@ export const getQuestionsService = async (filters) => {
     normalizedOffset,
   ]);
 
+  const tagsByQuestion = await getTagsForQuestions(rows.map((row) => row.id));
+
   return {
     data: rows.map((question) => ({
       id: question.id,
       questionHash: question.questionHash,
       title: question.title,
       content: question.content,
+      tags: tagsByQuestion.get(question.id) || [],
+      acceptedAnswerId: question.acceptedAnswerId,
       answerCount: question.answerCount,
       createdAt: question.createdAt,
       updatedAt: question.updatedAt,
@@ -195,13 +280,14 @@ export const getQuestionsService = async (filters) => {
     },
   };
 };
-export const getSingleQuestionService = async ({ questionHash }) => {
+export const getSingleQuestionService = async ({ questionHash, currentUserId }) => {
   const sql = `
         SELECT
             q.question_id AS id,
             q.question_hash AS questionHash,
             q.title,
             q.content,
+            q.accepted_answer_id AS acceptedAnswerId,
             q.created_at AS createdAt,
             q.updated_at AS updatedAt,
             u.user_id AS userId,
@@ -224,6 +310,8 @@ export const getSingleQuestionService = async ({ questionHash }) => {
   const row = rows[0];
 
   // NEW: fetch the actual answers for this question
+  const tagsByQuestion = await getTagsForQuestions([row.id]);
+
   const answerRows = await safeExecute(
     `
     SELECT
@@ -234,13 +322,20 @@ export const getSingleQuestionService = async ({ questionHash }) => {
       a.updated_at AS updatedAt,
       u.user_id AS userId,
       u.first_name AS firstName,
-      u.last_name AS lastName
+      u.last_name AS lastName,
+      COALESCE(SUM(av.value), 0) AS voteScore,
+      MAX(CASE WHEN av.user_id = ? THEN av.value ELSE NULL END) AS currentUserVote
     FROM answers a
     JOIN users u ON u.user_id = a.user_id
+    LEFT JOIN answer_votes av ON av.answer_id = a.answer_id
     WHERE a.question_id = ?
-    ORDER BY a.created_at ASC
+    GROUP BY a.answer_id, u.user_id
+    ORDER BY
+      CASE WHEN a.answer_id = ? THEN 0 ELSE 1 END,
+      voteScore DESC,
+      a.created_at ASC
     `,
-    [row.id],
+    [currentUserId || 0, row.id, row.acceptedAnswerId || 0],
   );
 
   return {
@@ -249,6 +344,8 @@ export const getSingleQuestionService = async ({ questionHash }) => {
       questionHash: row.questionHash,
       title: row.title,
       content: row.content,
+      tags: tagsByQuestion.get(row.id) || [],
+      acceptedAnswerId: row.acceptedAnswerId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       userId: row.userId,
@@ -308,11 +405,34 @@ export const getSimilarQuestionsService = async ({
   const { question } = await getSingleQuestionService({ questionHash });
   const sourceText = normalizeQuestionText({ title: question.title });
 
-  const result = await findSimilarQuestionsByText({
-    sourceText,
-    threshold: searchThreshold,
-    k,
-  });
+  let result;
+  try {
+    result = await findSimilarQuestionsByText({
+      sourceText,
+      threshold: searchThreshold,
+      k,
+    });
+  } catch (error) {
+    if (error?.statusCode === 503) {
+      console.warn(
+        "Similar questions unavailable. Returning an empty related list.",
+        error?.message || error,
+      );
+
+      return {
+        data: [],
+        meta: {
+          questionHash,
+          k,
+          threshold: searchThreshold,
+          total: 0,
+          vectorSearchAvailable: false,
+        },
+      };
+    }
+
+    throw error;
+  }
 
   // Exclude the original question from results if present
   const filtered = result.similarQuestions.filter((q) => q.id !== question.id);

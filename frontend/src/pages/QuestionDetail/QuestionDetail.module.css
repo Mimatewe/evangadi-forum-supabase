@@ -113,6 +113,29 @@
   margin: 0 0 1.25rem;
 }
 
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: -0.5rem 0 1rem;
+}
+
+.tagChip {
+  border: 1px solid #ffedd5;
+  background: #fff7ed;
+  color: #c2410c;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tagChip:hover {
+  border-color: #fdba74;
+  color: #ea580c;
+}
+
 /* ─── Content sections ───────────────────────────────────────────────────── */
 .section {
   margin-bottom: 1.1rem;
@@ -221,10 +244,29 @@
   margin-bottom: 0.85rem;
 }
 
+.acceptedAnswerCard {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
 .answeredBadge {
   color: #22c55e;
   margin-left: auto;
   flex-shrink: 0;
+}
+
+.acceptedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: #15803d;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .answerPara {
@@ -232,6 +274,71 @@
   color: #4b5563;
   line-height: 1.7;
   margin: 0.75rem 0 0;
+}
+
+.answerActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+
+.voteGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.voteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.voteBtn:hover:not(:disabled),
+.voteBtnActive {
+  border-color: #f97316;
+  color: #f97316;
+  background: #fff7ed;
+}
+
+.voteBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.voteScore {
+  min-width: 1.5rem;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.acceptBtn {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.acceptBtn:hover {
+  background: #dcfce7;
 }
 
 /* ─── Sidebar ────────────────────────────────────────────────────────────── */

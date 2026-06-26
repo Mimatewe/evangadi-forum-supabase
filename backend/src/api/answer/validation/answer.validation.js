@@ -24,7 +24,9 @@ export const validateAnswerIdParam = [
     .notEmpty()
     .withMessage("answer id parameter is requried")
     .isInt()
-    .withMessage("answer id must be an integer"),
+    .withMessage("answer id must be an integer")
+    .toInt(),
+  validationErrorHandler,
 ];
 
 export const updateAnswerValidation = [
@@ -36,5 +38,17 @@ export const updateAnswerValidation = [
     .isLength({ min: 20 })
     .withMessage("Answer content must be at least 20 characters")
     .trim(),
+  validationErrorHandler,
+];
+
+export const voteAnswerValidation = [
+  body("value")
+    .notEmpty()
+    .withMessage("Vote value is required")
+    .isInt({ min: -1, max: 1 })
+    .withMessage("Vote value must be -1 or 1")
+    .toInt()
+    .custom((value) => value === -1 || value === 1)
+    .withMessage("Vote value must be -1 or 1"),
   validationErrorHandler,
 ];

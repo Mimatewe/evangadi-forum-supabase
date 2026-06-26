@@ -296,6 +296,28 @@
   line-height: 1.4;
 }
 
+.thread-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.thread-tag {
+  border: 1px solid #ffedd5;
+  background: #fff7ed;
+  color: #c2410c;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.thread-tag:hover {
+  border-color: #fdba74;
+  color: #ea580c;
+}
+
 .thread-meta-row {
   display: flex;
   align-items: center;

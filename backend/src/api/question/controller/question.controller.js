@@ -20,11 +20,14 @@ import {
  */
 export const createQuestionController = async (req, res, next) => {
   try {
-    const { title, content } = req.body;
+    console.log("REQ BODY:", req.body);
+    const { title, content, tags } = req.body;
+    console.log("TAGS:", tags);
     const result = await createQuestionWithVectorService({
       userId: req.user.id,
       title,
       content,
+      tags,
     });
 
     res.status(StatusCodes.CREATED).json({
@@ -42,6 +45,7 @@ export const getQuestionsController = async (req, res, next) => {
     const filters = {
       search: req.query.search,
       mine: req.query.mine,
+      tag: req.query.tag,
       userId: req.user.id,
       limit: req.query.limit ? Number(req.query.limit) : 100,
       offset: req.query.offset ? Number(req.query.offset) : 0,
@@ -105,6 +109,7 @@ export const getSingleQuestionController = async (req, res, next) => {
   try {
     const result = await getSingleQuestionService({
       questionHash: req.params.questionHash,
+      currentUserId: req.user.id,
     });
 
     res.status(StatusCodes.OK).json({

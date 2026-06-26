@@ -28,6 +28,19 @@ export const createQuestionValidation = [
     .isLength({ min: 10 })
     .withMessage("Question content must be at least 10 characters")
     .trim(),
+  body("tags")
+    .optional()
+    .isArray({ max: 5 })
+    .withMessage("Tags must be an array with up to 5 items"),
+  body("tags.*")
+    .optional()
+    .isString()
+    .withMessage("Each tag must be a string")
+    .trim()
+    .isLength({ min: 2, max: 40 })
+    .withMessage("Each tag must be between 2 and 40 characters")
+    .matches(/^#?[a-zA-Z0-9][a-zA-Z0-9-]*$/)
+    .withMessage("Tags may only contain letters, numbers, and hyphens"),
   validationErrorHandler,
 ];
 
@@ -42,6 +55,15 @@ export const getQuestionsValidation = [
     .isBoolean()
     .withMessage("Mine must be a boolean")
     .toBoolean(),
+  query("tag")
+    .optional()
+    .isString()
+    .withMessage("Tag must be a string")
+    .trim()
+    .isLength({ min: 2, max: 40 })
+    .withMessage("Tag must be between 2 and 40 characters")
+    .matches(/^#?[a-zA-Z0-9][a-zA-Z0-9-]*$/)
+    .withMessage("Tag may only contain letters, numbers, and hyphens"),
   validationErrorHandler,
 ];
 

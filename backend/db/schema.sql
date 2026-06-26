@@ -1,4 +1,17 @@
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS `answer_votes`;
+DROP TABLE IF EXISTS `question_tags`;
+DROP TABLE IF EXISTS `tags`;
+DROP TABLE IF EXISTS `document_chunk_vectors`;
+DROP TABLE IF EXISTS `document_chunks`;
+DROP TABLE IF EXISTS `documents`;
+DROP TABLE IF EXISTS `question_vectors`;
+DROP TABLE IF EXISTS `answers`;
+DROP TABLE IF EXISTS `questions`;
 DROP TABLE IF EXISTS `users`;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE `users` (
     `user_id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -12,17 +25,13 @@ CREATE TABLE `users` (
     
     INDEX `idx_users_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-
-
-DROP TABLE IF EXISTS `questions`;
 CREATE TABLE `questions` (
     `question_id` INT AUTO_INCREMENT PRIMARY KEY,
     `question_hash` CHAR(16) NOT NULL UNIQUE,
     `user_id` INT NOT NULL,
     `title` VARCHAR(255) NOT NULL,
     `content` TEXT NOT NULL, 
+    `accepted_answer_id` INT DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CHECK (CHAR_LENGTH(`title`) >= 5),
@@ -36,8 +45,29 @@ CREATE TABLE `questions` (
     FULLTEXT KEY `ft_questions_search` (`title`, `content`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `tags` (
+    `tag_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(40) NOT NULL UNIQUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-DROP TABLE IF EXISTS `question_vectors`;
+    CHECK (`name` = LOWER(`name`)),
+    CHECK (`name` REGEXP '^[a-z0-9][a-z0-9-]{1,39}$'),
+
+    INDEX `idx_tags_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `question_tags` (
+    `question_id` INT NOT NULL,
+    `tag_id` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (`question_id`, `tag_id`),
+    FOREIGN KEY (`question_id`) REFERENCES `questions` (`question_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`tag_id`) REFERENCES `tags` (`tag_id`) ON DELETE CASCADE,
+
+    INDEX `idx_question_tags_tag_id` (`tag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `question_vectors` (
      `vector_id` INT AUTO_INCREMENT PRIMARY KEY,
      `question_id` INT NOT NULL,
@@ -54,7 +84,6 @@ CREATE TABLE `question_vectors` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-DROP TABLE IF EXISTS `answers`;
 CREATE TABLE `answers` (
      `answer_id` INT AUTO_INCREMENT PRIMARY KEY,
      `question_id` INT NOT NULL,
@@ -70,13 +99,29 @@ CREATE TABLE `answers` (
      INDEX `idx_answers_user_id` (`user_id`),
      INDEX `idx_answers_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `answer_votes` (
+     `answer_id` INT NOT NULL,
+     `user_id` INT NOT NULL,
+     `value` TINYINT NOT NULL,
+     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+     PRIMARY KEY (`answer_id`, `user_id`),
+     FOREIGN KEY (`answer_id`) REFERENCES `answers` (`answer_id`) ON DELETE CASCADE,
+     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+     CHECK (`value` IN (-1, 1)),
+
+     INDEX `idx_answer_votes_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `questions`
+    ADD CONSTRAINT `fk_questions_accepted_answer`
+    FOREIGN KEY (`accepted_answer_id`) REFERENCES `answers` (`answer_id`) ON DELETE SET NULL;
 -- ============================================================
 -- RAG Tables
 -- ============================================================
 
-
-
-DROP TABLE IF EXISTS `documents`;
 CREATE TABLE `documents` (
     `document_id`   INT AUTO_INCREMENT PRIMARY KEY,
     `user_id`       INT NOT NULL,
@@ -95,7 +140,6 @@ CREATE TABLE `documents` (
     INDEX `idx_documents_status`  (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `document_chunks`;
 CREATE TABLE `document_chunks` (
     `chunk_id`      INT AUTO_INCREMENT PRIMARY KEY,
     `document_id`   INT NOT NULL,
@@ -108,7 +152,6 @@ CREATE TABLE `document_chunks` (
     INDEX `idx_chunks_document_id` (`document_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `document_chunk_vectors`;
 CREATE TABLE `document_chunk_vectors` (
     `vector_id`     INT AUTO_INCREMENT PRIMARY KEY,
     `chunk_id`      INT NOT NULL,

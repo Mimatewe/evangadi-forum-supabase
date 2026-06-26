@@ -20,7 +20,8 @@ export default function PostQuestion() {
   const navigate = useNavigate();
 
   // 1. State Management
-  const [formData, setFormData] = useState({ title: "", content: "" });
+  const [formData, setFormData] = useState({ title: "", content: "", tags: [] });
+  const [tagInput, setTagInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCoaching, setIsCoaching] = useState(false);
   const [coachResponse, setCoachResponse] = useState(null);
@@ -37,6 +38,42 @@ export default function PostQuestion() {
     if (fieldErrors[id]) {
       setFieldErrors((prev) => ({ ...prev, [id]: "" }));
     }
+  };
+
+  const normalizeTag = (value) =>
+    value
+      .trim()
+      .replace(/^#/, "")
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+
+  const buildTagsForSubmit = () => {
+    const pendingTag = normalizeTag(tagInput);
+    const tags = [...formData.tags];
+
+    if (/^[a-z0-9][a-z0-9-]{1,39}$/.test(pendingTag)) {
+      tags.push(pendingTag);
+    }
+
+    return [...new Set(tags)].slice(0, 5);
+  };
+
+  const addTag = () => {
+    const nextTag = normalizeTag(tagInput);
+    if (!/^[a-z0-9][a-z0-9-]{1,39}$/.test(nextTag)) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      tags: [...new Set([...prev.tags, nextTag])].slice(0, 5),
+    }));
+    setTagInput("");
+  };
+
+  const removeTag = (tagToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+    }));
   };
 
   const validateForm = () => {
@@ -71,10 +108,16 @@ export default function PostQuestion() {
     try {
       setIsSubmitting(true);
       const token = localStorage.getItem("token");
+      const requestBody = {
+        ...formData,
+        tags: buildTagsForSubmit(),
+      };
+
+      console.log("POST QUESTION BODY:", requestBody);
 
       const response = await axios.post(
         "http://localhost:3777/api/questions",
-        formData,
+        requestBody,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -82,7 +125,7 @@ export default function PostQuestion() {
 
       if (response.data.success) {
         setSuccessMessage("Question published successfully!");
-        setFormData({ title: "", content: "" });
+        setFormData({ title: "", content: "", tags: [] });
 
         const { questionHash } = response.data.data;
         navigate(`/questions/${questionHash}`);
@@ -248,6 +291,60 @@ export default function PostQuestion() {
               <span className="inline-error-msg">
                 <AlertCircle size={12} /> {fieldErrors.title}
               </span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="tags" className="form-label">
+              Hashtags
+            </label>
+            <small className="text-muted">
+              Add up to 5 tags so classmates can filter topics faster.
+            </small>
+            <div className="tag-input-row">
+              <input
+                type="text"
+                id="tags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+                disabled={isSubmitting || isCoaching || formData.tags.length >= 5}
+                placeholder="react, mysql, deployment"
+                className="form-input"
+              />
+              <button
+                type="button"
+                className="tag-add-button"
+                onClick={addTag}
+                disabled={
+                  isSubmitting ||
+                  isCoaching ||
+                  formData.tags.length >= 5 ||
+                  !tagInput.trim()
+                }
+              >
+                Add
+              </button>
+            </div>
+            {formData.tags.length > 0 && (
+              <div className="tag-chip-row">
+                {formData.tags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="tag-chip"
+                    onClick={() => removeTag(tag)}
+                    title={`Remove #${tag}`}
+                  >
+                    #{tag} ×
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 

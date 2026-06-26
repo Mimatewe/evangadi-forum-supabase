@@ -15,6 +15,8 @@ import {
   Clock,
   Loader2,
   CheckCircle2,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import styles from "./QuestionDetail.module.css";
 
@@ -123,7 +125,10 @@ useEffect(() => {
       );
       const newAnswer = data.answer ?? data.data;
       if (newAnswer) {
-        setAnswers((prev) => [...prev, newAnswer]);
+        setAnswers((prev) => [
+          ...prev,
+          { ...newAnswer, voteScore: 0, currentUserVote: null },
+        ]);
         setQuestion((prev) => ({
           ...prev,
           answerCount: (prev.answerCount ?? 0) + 1,
@@ -135,6 +140,57 @@ useEffect(() => {
       setPostError("Failed to post your answer. Please try again.");
     } finally {
       setIsPosting(false);
+    }
+  };
+
+  const handleVote = async (answer, value) => {
+    try {
+      const token = localStorage.getItem("token");
+      const isClearingVote = Number(answer.currentUserVote) === value;
+      const { data } = isClearingVote
+        ? await axios.delete(`http://localhost:3777/api/answers/${answer.id}/vote`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        : await axios.put(
+            `http://localhost:3777/api/answers/${answer.id}/vote`,
+            { value },
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+
+      setAnswers((prev) =>
+        prev.map((item) =>
+          item.id === answer.id
+            ? {
+                ...item,
+                voteScore: data.data?.voteScore ?? 0,
+                currentUserVote: data.data?.currentUserVote ?? null,
+              }
+            : item,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to vote:", err);
+      setPostError(err.response?.data?.message || "Failed to save your vote.");
+    }
+  };
+
+  const handleAcceptAnswer = async (answerId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await axios.put(
+        `http://localhost:3777/api/answers/${answerId}/accept`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setQuestion((prev) => ({
+        ...prev,
+        acceptedAnswerId: data.data?.acceptedAnswerId ?? answerId,
+      }));
+    } catch (err) {
+      console.error("Failed to accept answer:", err);
+      setPostError(
+        err.response?.data?.message || "Failed to mark accepted answer.",
+      );
     }
   };
 
@@ -226,6 +282,23 @@ useEffect(() => {
 
             <h1 className={styles.questionTitle}>{question.title}</h1>
 
+            {question.tags?.length > 0 && (
+              <div className={styles.tagRow}>
+                {question.tags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={styles.tagChip}
+                    onClick={() =>
+                      navigate(`/dashboard?tag=${encodeURIComponent(tag)}`)
+                    }
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className={styles.section}>
               <h3 className={styles.sectionHeading}>Question</h3>
               <p className={styles.sectionText}>{question.content}</p>
@@ -258,8 +331,15 @@ useEffect(() => {
               answers.map((answer) => {
                 const answerName =
                   `${answer.firstName ?? ""} ${answer.lastName ?? ""}`.trim();
+                const isAccepted = question.acceptedAnswerId === answer.id;
+                const isAnswerOwner = user?.id === answer.userId;
                 return (
-                  <div key={answer.id} className={styles.answerCard}>
+                  <div
+                    key={answer.id}
+                    className={`${styles.answerCard} ${
+                      isAccepted ? styles.acceptedAnswerCard : ""
+                    }`}
+                  >
                     <div className={styles.authorRow}>
                       <Avatar
                         firstName={answer.firstName}
@@ -275,12 +355,65 @@ useEffect(() => {
                           {formatDate(answer.createdAt)}
                         </span>
                       </div>
-                      <CheckCircle2
-                        size={16}
-                        className={styles.answeredBadge}
-                      />
+                      {isAccepted && (
+                        <span className={styles.acceptedBadge}>
+                          <CheckCircle2 size={16} />
+                          Accepted
+                        </span>
+                      )}
                     </div>
                     <p className={styles.answerPara}>{answer.content}</p>
+                    <div className={styles.answerActions}>
+                      <div className={styles.voteGroup}>
+                        <button
+                          type="button"
+                          className={`${styles.voteBtn} ${
+                            Number(answer.currentUserVote) === 1
+                              ? styles.voteBtnActive
+                              : ""
+                          }`}
+                          onClick={() => handleVote(answer, 1)}
+                          disabled={isAnswerOwner}
+                          title={
+                            isAnswerOwner
+                              ? "You cannot vote on your own answer"
+                              : "Upvote"
+                          }
+                        >
+                          <ThumbsUp size={14} />
+                        </button>
+                        <span className={styles.voteScore}>
+                          {Number(answer.voteScore || 0)}
+                        </span>
+                        <button
+                          type="button"
+                          className={`${styles.voteBtn} ${
+                            Number(answer.currentUserVote) === -1
+                              ? styles.voteBtnActive
+                              : ""
+                          }`}
+                          onClick={() => handleVote(answer, -1)}
+                          disabled={isAnswerOwner}
+                          title={
+                            isAnswerOwner
+                              ? "You cannot vote on your own answer"
+                              : "Downvote"
+                          }
+                        >
+                          <ThumbsDown size={14} />
+                        </button>
+                      </div>
+
+                      {isOwner && !isAccepted && (
+                        <button
+                          type="button"
+                          className={styles.acceptBtn}
+                          onClick={() => handleAcceptAnswer(answer.id)}
+                        >
+                          Mark accepted
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })
