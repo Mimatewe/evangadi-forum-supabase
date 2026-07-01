@@ -6,15 +6,32 @@ import { db } from "./db/config.js";
 import { mainRoutes } from "./src/api/routes.js";
 const app = express();
 const port = process.env.PORT || 3777;
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
-  .split(",")
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
+]
+  .filter(Boolean)
+  .flatMap((origin) => origin.split(","))
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+console.log("Allowed Origins:", allowedOrigins);
 
 // Middleware
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes("*")) {
+        callback(null, true);
+      } else {
+        console.error(`CORS blocked for origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   }),
 );
 // app.use(cors());
@@ -76,6 +93,10 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
+    const dbUrl = process.env.DATABASE_URL || "";
+    const maskedUrl = dbUrl.replace(/:([^:@]+)@/, ":****@");
+    console.log(`Connecting to database: ${maskedUrl}`);
+
     // pg Pool uses connect()/release(); mysql2 used getConnection()/release().
     const connection = await db.connect();
 

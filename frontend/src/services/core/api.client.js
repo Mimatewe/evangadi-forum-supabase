@@ -1,11 +1,19 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+
+if (!API_BASE_URL && import.meta.env.PROD) {
+  console.warn(
+    'VITE_API_URL is not defined in production. API calls will likely fail.'
+  );
+}
+
 /**
  * Configured axios instance for API communication.
  */
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3777',
-  timeout: 10000,
+  baseURL: API_BASE_URL || 'http://localhost:3777',
+  timeout: 15000, // Increased timeout for cold starts
   headers: {
     'Content-Type': 'application/json',
   },
