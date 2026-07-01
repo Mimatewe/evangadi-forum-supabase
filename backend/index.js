@@ -21,18 +21,31 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Root Route
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Evangadi Forum API is running",
+    health: "/api/health",
+    database: "/api/health/db",
+  });
+});
+
 // Health Check
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date() });
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "Backend is healthy",
+    service: "evangadi-forum-api",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Database + pgvector health check
-// Verifies the Supabase PostgreSQL connection and that the pgvector
-// extension is installed. Does not require authentication.
 app.get("/api/health/db", async (req, res) => {
   try {
     // 1. Confirm the pool can run a query.
-    const result = await db.query("SELECT 1 AS ok");
+    await db.query("SELECT 1");
 
     // 2. Confirm pgvector is enabled in this database.
     const extResult = await db.query(
@@ -40,18 +53,18 @@ app.get("/api/health/db", async (req, res) => {
     );
     const pgvectorEnabled = extResult.rows && extResult.rows.length > 0;
 
-    return res.status(200).json({
+    res.json({
       success: true,
       database: "connected",
       provider: "supabase-postgres",
       pgvector: pgvectorEnabled ? "enabled" : "not_enabled",
     });
   } catch (error) {
-    return res.status(503).json({
+    res.status(500).json({
       success: false,
       database: "disconnected",
+      message: error.message,
       provider: "supabase-postgres",
-      error: error?.message || "Unable to connect to the database",
     });
   }
 });
