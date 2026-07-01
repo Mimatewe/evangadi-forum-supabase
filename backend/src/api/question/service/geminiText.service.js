@@ -110,8 +110,10 @@ Draft question content: ${content}
 
   const rawResponse = await generateText(prompt, systemInstruction);
 
-  console.log("=== GEMINI RAW RESPONSE ===");
-  console.log(rawResponse);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("=== GEMINI RAW RESPONSE ===");
+    console.log(rawResponse);
+  }
 
   try {
     const parsed = parseJSONFromText(rawResponse);

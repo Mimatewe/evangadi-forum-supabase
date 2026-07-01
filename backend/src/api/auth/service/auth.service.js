@@ -21,7 +21,8 @@ const normalizeEmail = (email) => email.trim().toLowerCase();
 export const checkUserExists = async (email) => {
   const normalizedEmail = normalizeEmail(email);
 
-  const sql = "SELECT user_id FROM users WHERE email = ? LIMIT 1";
+  // PostgreSQL: ? placeholders are auto-converted to $1 by safeExecute.
+  const sql = "SELECT user_id FROM users WHERE email = $1 LIMIT 1";
 
   const rows = await safeExecute(sql, [normalizedEmail]);
 
@@ -46,8 +47,9 @@ export const registerService = async ({
 
   const hashedPassword = await bcrypt.hash(password, salt);
 
+  // PostgreSQL: RETURNING <pk> replaces MySQL's result.insertId.
   const sql =
-    "INSERT INTO users (first_name,last_name,email,password_hash) VALUES (?,?,?,?)";
+    "INSERT INTO users (first_name,last_name,email,password_hash) VALUES ($1,$2,$3,$4) RETURNING user_id";
 
   const result = await safeExecute(sql, [
     firstName,
@@ -68,7 +70,7 @@ export const loginService = async ({ email, password }) => {
   const normalizedEmail = normalizeEmail(email);
 
   const sql =
-    "SELECT user_id,first_name,last_name,email,password_hash FROM users WHERE email = ? LIMIT 1";
+    "SELECT user_id,first_name,last_name,email,password_hash FROM users WHERE email = $1 LIMIT 1";
 
   const rows = await safeExecute(sql, [normalizedEmail]);
 

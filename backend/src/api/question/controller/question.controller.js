@@ -20,9 +20,7 @@ import {
  */
 export const createQuestionController = async (req, res, next) => {
   try {
-    console.log("REQ BODY:", req.body);
     const { title, content, tags } = req.body;
-    console.log("TAGS:", tags);
     const result = await createQuestionWithVectorService({
       userId: req.user.id,
       title,

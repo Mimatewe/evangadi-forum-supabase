@@ -256,29 +256,36 @@
   display: block !important;
 }
 
-.thread-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  background-color: #ffffff;
+.thread-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:22px;
+    background:white;
+    transition:.25s;
+    cursor:pointer;
+    border-bottom:1px solid #edf2f7;
 }
 
 .thread-row:last-child {
   border-bottom: none;
 }
 
-.thread-row:hover {
-  background-color: #f8fafc;
+.thread-row:hover{
+    background:#fffaf5;
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(0,0,0,.06);
 }
 
 /* 🔸 Conditional Feature: Applies a slim left accent line if it's authored by the user */
 .user-owned-thread {
-  border-left: 3px solid #f97316;
+   border-left:5px solid #f97316;
   padding-left: calc(1.5rem - 3px); /* Offsets border-width change seamlessly */
+   background:#fffaf5;
+}
+.thread-row:not(.user-owned-thread) {
+  border-left: 5px solid #3b82f6;
+  background: #eff6ff;
 }
 
 .thread-main-content {
@@ -288,65 +295,67 @@
   text-align: left;
 }
 
-.thread-row-title {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #0f172a;
-  margin: 0;
-  line-height: 1.4;
+.thread-row-title{
+    font-size:18px;
+    font-weight:700;
+    color:#111827;
+   transition:.2s;
 }
-
-.thread-tags-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+.thread-row:hover .thread-row-title{
+    color:#ea580c;
 }
-
-.thread-tag {
-  border: 1px solid #ffedd5;
-  background: #fff7ed;
-  color: #c2410c;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.thread-tag:hover {
-  border-color: #fdba74;
-  color: #ea580c;
-}
-
-.thread-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #64748b;
+.thread-meta-row{
+    margin-top:6px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    color:#64748b;
+    font-size:13px;
 }
 
 .meta-divider {
   color: #cbd5e1;
 }
 
-.thread-stats-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #64748b;
-  background-color: #f1f5f9;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+.thread-stats-badge{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    border-radius:25px;
+    background:#fff7ed;
+    color:#ea580c;
+    font-weight:700;
 }
 
 .row-arrow-icon {
   color: #94a3b8;
   margin-left: 0.25rem;
 }
+.threadPreview{
+    margin-top:10px;
+    color:#6b7280;
+    line-height:1.7;
+    font-size:14px;
+}
+.authorRow{
 
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+}
+
+.youBadge{
+    background:#f97316;
+    color:white;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:600;
+}
 /* ==========================================
    Thread Row Sub-Layout with Avatar Circle
    ========================================== */
@@ -360,20 +369,22 @@
 }
 
 .avatar-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background-color: #f1f5f9; /* Soft low-contrast gray base background */
-  border: 1px solid #e2e8f0;
-  color: #475569; /* Slate typography tracking tone */
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  flex-shrink: 0; /* Prevents container distortion on narrow viewports */
-  user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg,#3b82f6,#60a5fa);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 8px 20px rgba(249,115,22,.25);
+  transition: .25s;
+}
+.thread-row:hover .avatar-circle{
+    transform:scale(1.08);
 }
 
 /* Optional: Gives your specific threads a subtle warm background hue on the avatar */
@@ -381,6 +392,7 @@
   background-color: #fff7ed;
   border-color: #ffedd5;
   color: #ea580c;
+  background: linear-gradient(135deg,#f97316,#fb923c);
 }
 
 /* Pagination */

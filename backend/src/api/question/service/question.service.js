@@ -32,22 +32,26 @@ const attachTagsToQuestion = async (questionId, tags = []) => {
   if (normalizedTags.length === 0) return [];
 
   for (const tagName of normalizedTags) {
-    await safeExecute("INSERT IGNORE INTO tags (name) VALUES (?)", [tagName]);
+    // PostgreSQL: ON CONFLICT DO NOTHING replaces MySQL INSERT IGNORE.
+    await safeExecute(
+      "INSERT INTO tags (name) VALUES ($1) ON CONFLICT (name) DO NOTHING",
+      [tagName],
+    );
 
+    // PostgreSQL lowercases unquoted aliases, so "tagId" must be quoted
+    // to preserve the camelCase key that the JS code reads (row.tagId).
     const tagRows = await safeExecute(
-      "SELECT tag_id AS tagId FROM tags WHERE name = ? LIMIT 1",
+      "SELECT tag_id AS \"tagId\" FROM tags WHERE name = $1 LIMIT 1",
       [tagName],
     );
     const tagId = tagRows[0]?.tagId;
-
-    console.log("TAG SAVE:", { tagName, tagId, questionId });
 
     if (!tagId) {
       throw new BadRequestError(`Could not save tag: ${tagName}`);
     }
 
     await safeExecute(
-      "INSERT IGNORE INTO question_tags (question_id, tag_id) VALUES (?, ?)",
+      "INSERT INTO question_tags (question_id, tag_id) VALUES ($1, $2) ON CONFLICT (question_id, tag_id) DO NOTHING",
       [questionId, tagId],
     );
   }
@@ -59,9 +63,11 @@ const getTagsForQuestions = async (questionIds = []) => {
   if (questionIds.length === 0) return new Map();
 
   const placeholders = questionIds.map(() => "?").join(",");
+  // The ? placeholders here are dynamic; safeExecute converts each to $N.
+  // PostgreSQL lowercases unquoted aliases — quote camelCase keys.
   const rows = await safeExecute(
     `
-    SELECT qt.question_id AS questionId, t.name
+    SELECT qt.question_id AS "questionId", t.name
     FROM question_tags qt
     JOIN tags t ON t.tag_id = qt.tag_id
     WHERE qt.question_id IN (${placeholders})
@@ -90,9 +96,10 @@ export const createQuestionWithVectorService = async (payload) => {
   // Extract required fields from the payload
   const { userId, title, content, tags = [] } = payload;
 
-  // Prepare the SQL statement for inserting a new question
+  // Prepare the SQL statement for inserting a new question.
+  // PostgreSQL: RETURNING question_id replaces MySQL result.insertId.
   const insertQuestionSql =
-    "INSERT INTO questions (question_hash, user_id, title, content) VALUES (?, ?, ?, ?);";
+    "INSERT INTO questions (question_hash, user_id, title, content) VALUES ($1, $2, $3, $4) RETURNING question_id;";
 
   // Generate a unique hash for the question
   const questionHash = generateQuestionHash();
@@ -107,8 +114,9 @@ export const createQuestionWithVectorService = async (payload) => {
       content,
     ]);
   } catch (error) {
-    // Handle specific foreign key constraint error for non-existent user
-    if (error?.code === "ER_NO_REFERENCED_ROW_2") {
+    // Handle specific foreign key constraint error for non-existent user.
+    // PostgreSQL foreign-key violation is SQLSTATE 23503 (code 23503).
+    if (error?.code === "23503" || error?.code === "ER_NO_REFERENCED_ROW_2") {
       throw new BadRequestError("User does not exist.");
     }
     // Re-throw any other unexpected errors
@@ -117,7 +125,6 @@ export const createQuestionWithVectorService = async (payload) => {
 
   // Retrieve the auto-generated ID of the newly inserted question
   const questionId = questionResult.insertId;
-  console.log("QUESTION ID:", questionId);
 
   // Construct the result object representing the created question
   const creationResult = {
@@ -170,6 +177,9 @@ const buildQuestionFilters = (filters) => {
   const conditions = [];
   const params = [];
 
+  // NOTE: ? placeholders are used here because conditions are built dynamically.
+  // safeExecute() converts each ? to $N in left-to-right order, and `params`
+  // is pushed in the same order, so PostgreSQL numbered placeholders line up.
   if (filters.search) {
     conditions.push("(q.title LIKE ? OR q.content LIKE ?)");
     const searchTerm = `%${filters.search}%`;
@@ -211,30 +221,32 @@ export const getQuestionsService = async (filters) => {
   const { whereClause, params } = buildQuestionFilters(filters);
 
   // Get total count for pagination metadata
+  // PostgreSQL lowercases unquoted aliases — quote camelCase keys.
   const countSql = `
-    SELECT COUNT(DISTINCT q.question_id) AS totalCount
+    SELECT COUNT(DISTINCT q.question_id) AS "totalCount"
     FROM questions q
     JOIN users u ON u.user_id = q.user_id
     ${whereClause}
   `;
 
   const countRows = await safeExecute(countSql, params);
-  const totalCount = countRows[0]?.totalCount || 0;
+  // PostgreSQL COUNT() returns a string by default; coerce to number.
+  const totalCount = Number(countRows[0]?.totalCount || 0);
 
   // Get paginated results
   const listSql = `
     SELECT
         q.question_id AS id,
-        q.question_hash AS questionHash,
+        q.question_hash AS "questionHash",
         q.title,
         q.content,
-        q.accepted_answer_id AS acceptedAnswerId,
-        q.created_at AS createdAt,
-        q.updated_at AS updatedAt,
-        u.user_id AS userId,
-        u.first_name AS firstName,
-        u.last_name AS lastName,
-        COUNT(DISTINCT a.answer_id) AS answerCount
+        q.accepted_answer_id AS "acceptedAnswerId",
+        q.created_at AS "createdAt",
+        q.updated_at AS "updatedAt",
+        u.user_id AS "userId",
+        u.first_name AS "firstName",
+        u.last_name AS "lastName",
+        COUNT(DISTINCT a.answer_id) AS "answerCount"
     FROM questions q
     JOIN users u ON u.user_id = q.user_id
     LEFT JOIN answers a ON a.question_id = q.question_id
@@ -260,7 +272,8 @@ export const getQuestionsService = async (filters) => {
       content: question.content,
       tags: tagsByQuestion.get(question.id) || [],
       acceptedAnswerId: question.acceptedAnswerId,
-      answerCount: question.answerCount,
+      // PostgreSQL COUNT() returns a string; coerce to number.
+      answerCount: Number(question.answerCount),
       createdAt: question.createdAt,
       updatedAt: question.updatedAt,
 
@@ -281,23 +294,24 @@ export const getQuestionsService = async (filters) => {
   };
 };
 export const getSingleQuestionService = async ({ questionHash, currentUserId }) => {
+  // PostgreSQL lowercases unquoted aliases — quote camelCase keys.
   const sql = `
         SELECT
             q.question_id AS id,
-            q.question_hash AS questionHash,
+            q.question_hash AS "questionHash",
             q.title,
             q.content,
-            q.accepted_answer_id AS acceptedAnswerId,
-            q.created_at AS createdAt,
-            q.updated_at AS updatedAt,
-            u.user_id AS userId,
-            u.first_name AS firstName,
-            u.last_name AS lastName,
-            COUNT(DISTINCT a.answer_id) AS answerCount
+            q.accepted_answer_id AS "acceptedAnswerId",
+            q.created_at AS "createdAt",
+            q.updated_at AS "updatedAt",
+            u.user_id AS "userId",
+            u.first_name AS "firstName",
+            u.last_name AS "lastName",
+            COUNT(DISTINCT a.answer_id) AS "answerCount"
         FROM questions q
         JOIN users u ON u.user_id = q.user_id
         LEFT JOIN answers a ON a.question_id = q.question_id
-        WHERE q.question_hash = ?
+        WHERE q.question_hash = $1
         GROUP BY q.question_id, u.user_id
         LIMIT 1
     `;
@@ -316,27 +330,38 @@ export const getSingleQuestionService = async ({ questionHash, currentUserId }) 
     `
     SELECT
       a.answer_id AS id,
-      a.question_id AS questionId,
+      a.question_id AS "questionId",
       a.content,
-      a.created_at AS createdAt,
-      a.updated_at AS updatedAt,
-      u.user_id AS userId,
-      u.first_name AS firstName,
-      u.last_name AS lastName,
-      COALESCE(SUM(av.value), 0) AS voteScore,
-      MAX(CASE WHEN av.user_id = ? THEN av.value ELSE NULL END) AS currentUserVote
+      a.created_at AS "createdAt",
+      a.updated_at AS "updatedAt",
+      u.user_id AS "userId",
+      u.first_name AS "firstName",
+      u.last_name AS "lastName",
+      COALESCE(SUM(av.value), 0) AS "voteScore",
+      MAX(CASE WHEN av.user_id = $1 THEN av.value ELSE NULL END) AS "currentUserVote"
     FROM answers a
     JOIN users u ON u.user_id = a.user_id
     LEFT JOIN answer_votes av ON av.answer_id = a.answer_id
-    WHERE a.question_id = ?
+    WHERE a.question_id = $2
     GROUP BY a.answer_id, u.user_id
     ORDER BY
-      CASE WHEN a.answer_id = ? THEN 0 ELSE 1 END,
-      voteScore DESC,
+      CASE WHEN a.answer_id = $3 THEN 0 ELSE 1 END,
+      "voteScore" DESC,
       a.created_at ASC
     `,
     [currentUserId || 0, row.id, row.acceptedAnswerId || 0],
   );
+
+  // PostgreSQL aggregates (SUM/MAX/COUNT) return strings; coerce numeric
+  // fields so the frontend receives the same types as with MySQL.
+  const normalizedAnswerRows = answerRows.map((a) => ({
+    ...a,
+    voteScore: Number(a.voteScore || 0),
+    currentUserVote:
+      a.currentUserVote === null || a.currentUserVote === undefined
+        ? null
+        : Number(a.currentUserVote),
+  }));
 
   return {
     question: {
@@ -351,8 +376,8 @@ export const getSingleQuestionService = async ({ questionHash, currentUserId }) 
       userId: row.userId,
       firstName: row.firstName,
       lastName: row.lastName,
-      answerCount: row.answerCount,
-      answers: answerRows, // NEW
+      answerCount: Number(row.answerCount),
+      answers: normalizedAnswerRows, // NEW
     },
   };
 };

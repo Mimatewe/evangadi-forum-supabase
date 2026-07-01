@@ -29,16 +29,16 @@ const getSingleAnswerService = async (answerId) => {
   const sql = `
     SELECT
       a.answer_id AS id,
-      a.question_id AS questionId,
+      a.question_id AS "questionId",
       a.content,
-      a.created_at AS createdAt,
-      a.updated_at AS updatedAt,
-      u.user_id AS userId,
-      u.first_name AS firstName,
-      u.last_name AS lastName
+      a.created_at AS "createdAt",
+      a.updated_at AS "updatedAt",
+      u.user_id AS "userId",
+      u.first_name AS "firstName",
+      u.last_name AS "lastName"
     FROM answers a
     JOIN users u ON u.user_id = a.user_id
-    WHERE a.answer_id = ?
+    WHERE a.answer_id = $1
     LIMIT 1
   `;
 
@@ -53,7 +53,7 @@ const getSingleAnswerService = async (answerId) => {
 
 const getQuestionOwner = async (questionId) => {
   const rows = await safeExecute(
-    `SELECT question_id,user_id FROM questions WHERE question_id=? LIMIT 1`,
+    `SELECT question_id,user_id FROM questions WHERE question_id=$1 LIMIT 1`,
     [questionId],
   );
   if (rows.length === 0) {
@@ -67,14 +67,14 @@ const getAnswerWithQuestionOwner = async (answerId) => {
   const rows = await safeExecute(
     `
     SELECT
-      a.answer_id AS answerId,
-      a.user_id AS answerUserId,
-      a.question_id AS questionId,
-      q.user_id AS questionOwnerId,
-      q.accepted_answer_id AS acceptedAnswerId
+      a.answer_id AS "answerId",
+      a.user_id AS "answerUserId",
+      a.question_id AS "questionId",
+      q.user_id AS "questionOwnerId",
+      q.accepted_answer_id AS "acceptedAnswerId"
     FROM answers a
     JOIN questions q ON q.question_id = a.question_id
-    WHERE a.answer_id = ?
+    WHERE a.answer_id = $1
     LIMIT 1
     `,
     [answerId],
@@ -91,10 +91,10 @@ const getAnswerVoteMeta = async (answerId, userId) => {
   const rows = await safeExecute(
     `
     SELECT
-      COALESCE(SUM(value), 0) AS voteScore,
-      MAX(CASE WHEN user_id = ? THEN value ELSE NULL END) AS currentUserVote
+      COALESCE(SUM(value), 0) AS "voteScore",
+      MAX(CASE WHEN user_id = $1 THEN value ELSE NULL END) AS "currentUserVote"
     FROM answer_votes
-    WHERE answer_id = ?
+    WHERE answer_id = $2
     `,
     [userId, answerId],
   );
@@ -111,7 +111,8 @@ export const createAnswerService = async ({ questionId, userId, content }) => {
     throw new BadRequestError("You cannot answer your own question");
   }
 
-  const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES (?,?,?)`;
+  // PostgreSQL: RETURNING answer_id replaces MySQL result.insertId.
+  const insertSql = `INSERT INTO answers (question_id , user_id,content) VALUES ($1,$2,$3) RETURNING answer_id`;
   const result = await safeExecute(insertSql, [questionId, userId, content]);
 
   return getSingleAnswerService(result.insertId);
@@ -126,14 +127,14 @@ export const getAnswerService = async (userId) => {
   SELECT
       a.answer_id AS id,
       a.content,
-      a.created_at AS createdAt,
-      q.question_id AS questionId,
-      q.title AS questionTitle,
-      q.question_hash AS questionHash /* <-- 1. Add this line */
+      a.created_at AS "createdAt",
+      q.question_id AS "questionId",
+      q.title AS "questionTitle",
+      q.question_hash AS "questionHash" /* <-- 1. Add this line */
   FROM answers a
   JOIN questions q
       ON a.question_id = q.question_id
-  WHERE a.user_id = ?
+  WHERE a.user_id = $1
   ORDER BY a.created_at DESC
   `,
       [userId],
@@ -159,7 +160,7 @@ export const getAnswerService = async (userId) => {
 export const deleteAnswerService = async (answerId, userId) => {
   try {
     const answer = await safeExecute(
-      "SELECT answer_id, user_id FROM answers WHERE answer_id = ?",
+      "SELECT answer_id, user_id FROM answers WHERE answer_id = $1",
       [answerId],
     );
     if (answer.length === 0) {
@@ -168,7 +169,7 @@ export const deleteAnswerService = async (answerId, userId) => {
     if (answer[0].user_id !== userId) {
       return { success: false, message: "You can only delete your own answer" };
     }
-    await safeExecute("DELETE FROM answers WHERE answer_id = ?", [answerId]);
+    await safeExecute("DELETE FROM answers WHERE answer_id = $1", [answerId]);
 
     return { success: true };
   } catch (error) {
@@ -182,7 +183,7 @@ export const updateAnswerService = async (answerId, userId, newContent) => {
   try {
     // checking if the user and the answer exist
     const answer = await safeExecute(
-      `SELECT answer_id, user_id FROM answers WHERE answer_id = ?`,
+      `SELECT answer_id, user_id FROM answers WHERE answer_id = $1`,
       [answerId],
     );
     if (answer.length === 0) {
@@ -200,7 +201,7 @@ export const updateAnswerService = async (answerId, userId, newContent) => {
 
     // update the content
     await safeExecute(
-      `UPDATE answers SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE answer_id = ?`,
+      `UPDATE answers SET content = $1, updated_at = CURRENT_TIMESTAMP WHERE answer_id = $2`,
       [newContent, answerId],
     );
 
@@ -216,11 +217,13 @@ export const voteAnswerService = async ({ answerId, userId, value }) => {
     throw new BadRequestError("You cannot vote on your own answer");
   }
 
+  // PostgreSQL: ON CONFLICT ... DO UPDATE replaces MySQL ON DUPLICATE KEY UPDATE.
+  // EXCLUDED.value refers to the value proposed for insertion.
   await safeExecute(
     `
     INSERT INTO answer_votes (answer_id, user_id, value)
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE value = VALUES(value)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (answer_id, user_id) DO UPDATE SET value = EXCLUDED.value
     `,
     [answerId, userId, value],
   );
@@ -230,7 +233,7 @@ export const voteAnswerService = async ({ answerId, userId, value }) => {
 
 export const clearAnswerVoteService = async ({ answerId, userId }) => {
   await getAnswerWithQuestionOwner(answerId);
-  await safeExecute("DELETE FROM answer_votes WHERE answer_id = ? AND user_id = ?", [
+  await safeExecute("DELETE FROM answer_votes WHERE answer_id = $1 AND user_id = $2", [
     answerId,
     userId,
   ]);
@@ -245,7 +248,7 @@ export const acceptAnswerService = async ({ answerId, userId }) => {
   }
 
   await safeExecute(
-    "UPDATE questions SET accepted_answer_id = ? WHERE question_id = ?",
+    "UPDATE questions SET accepted_answer_id = $1 WHERE question_id = $2",
     [answerId, answer.questionId],
   );
 

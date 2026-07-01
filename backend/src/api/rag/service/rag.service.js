@@ -8,7 +8,6 @@ import {
 } from "../../../utils/errors/index.js";
 import {
   generateQuestionEmbedding,
-  calculateCosineSimilarity,
 } from "../../question/service/vector.service.js";
 import { generateText } from "../../question/service/geminiText.service.js";
 
@@ -44,7 +43,7 @@ function mapDocument(row) {
 
 export async function assertOwnedDocument(documentId, userId) {
   const rows = await safeExecute(
-    `SELECT * FROM documents WHERE document_id = ? AND user_id = ? LIMIT 1`,
+    `SELECT * FROM documents WHERE document_id = $1 AND user_id = $2 LIMIT 1`,
     [documentId, userId],
   );
 
@@ -76,7 +75,7 @@ function chunkText(text) {
 
 async function updateDocumentStatus(documentId, status, errorMessage = null) {
   await safeExecute(
-    `UPDATE documents SET status = ?, error_message = ? WHERE document_id = ?`,
+    `UPDATE documents SET status = $1, error_message = $2 WHERE document_id = $3`,
     [status, errorMessage, documentId],
   );
 }
@@ -85,9 +84,10 @@ async function updateDocumentStatus(documentId, status, errorMessage = null) {
 
 export async function createDocumentFromUploadService({ userId, file }) {
   const [{ total }] = await safeExecute(
-    `SELECT COUNT(*) AS total FROM documents WHERE user_id = ?`,
+    `SELECT COUNT(*) AS total FROM documents WHERE user_id = $1`,
     [userId],
   );
+  // PostgreSQL COUNT() returns a string; coerce to number.
   if (Number(total) >= MAX_PDFS_PER_USER) {
     await fs.unlink(file.path).catch(() => {});
     throw new ServiceUnavailableError(
@@ -97,9 +97,11 @@ export async function createDocumentFromUploadService({ userId, file }) {
 
   const storagePath = path.join(String(userId), path.basename(file.path));
 
+  // PostgreSQL: RETURNING document_id replaces MySQL result.insertId.
   const insertResult = await safeExecute(
     `INSERT INTO documents (user_id, title, mime_type, byte_size, storage_path, status)
-     VALUES (?, ?, ?, ?, ?, 'processing')`,
+     VALUES ($1, $2, $3, $4, $5, 'processing')
+     RETURNING document_id`,
     [userId, file.originalname, file.mimetype, file.size, storagePath],
   );
 
@@ -123,8 +125,9 @@ export async function createDocumentFromUploadService({ userId, file }) {
     for (let i = 0; i < chunks.length; i++) {
       const chunkContent = chunks[i];
 
+      // PostgreSQL: RETURNING chunk_id replaces MySQL result.insertId.
       const chunkResult = await safeExecute(
-        `INSERT INTO document_chunks (document_id, chunk_index, content) VALUES (?, ?, ?)`,
+        `INSERT INTO document_chunks (document_id, chunk_index, content) VALUES ($1, $2, $3) RETURNING chunk_id`,
         [documentId, i, chunkContent],
       );
       const chunkId = chunkResult.insertId;
@@ -133,9 +136,11 @@ export async function createDocumentFromUploadService({ userId, file }) {
         taskType: "RETRIEVAL_DOCUMENT",
       });
 
+      // pgvector: store embedding as a string literal '[v1,v2,...]'.
+      const vectorLiteral = `[${embedding.join(",")}]`;
       await safeExecute(
-        `INSERT INTO document_chunk_vectors (chunk_id, document_id, embedding) VALUES (?, ?, ?)`,
-        [chunkId, documentId, JSON.stringify(embedding)],
+        `INSERT INTO document_chunk_vectors (chunk_id, document_id, embedding) VALUES ($1, $2, $3)`,
+        [chunkId, documentId, vectorLiteral],
       );
     }
 
@@ -148,7 +153,7 @@ export async function createDocumentFromUploadService({ userId, file }) {
   }
 
   const rows = await safeExecute(
-    `SELECT * FROM documents WHERE document_id = ? LIMIT 1`,
+    `SELECT * FROM documents WHERE document_id = $1 LIMIT 1`,
     [documentId],
   );
   return mapDocument(rows[0]);
@@ -166,7 +171,7 @@ export async function deleteDocumentService({ documentId, userId }) {
     }
   });
 
-  await safeExecute(`DELETE FROM documents WHERE document_id = ?`, [
+  await safeExecute(`DELETE FROM documents WHERE document_id = $1`, [
     documentId,
   ]);
 
@@ -186,7 +191,7 @@ export async function listDocumentsForUserService({ userId }) {
   const rows = await safeExecute(
     `SELECT document_id, title, mime_type, byte_size, status, error_message, created_at, updated_at
      FROM documents
-     WHERE user_id = ?
+     WHERE user_id = $1
      ORDER BY created_at DESC`,
     [userId],
   );
@@ -222,60 +227,48 @@ export async function searchInDocumentService({
     taskType: "RETRIEVAL_QUERY",
   });
 
-  const vectorRows = await safeExecute(
-    `SELECT dcv.chunk_id, dcv.embedding
-     FROM document_chunk_vectors dcv
-     WHERE dcv.document_id = ?`,
-    [documentId],
-  );
+  // pgvector native cosine-distance search within this document's chunks.
+  //   cosine_distance = embedding <=> query  (0 = identical)
+  //   cosine_similarity = 1 - cosine_distance
+  // Filter by max distance = (1 - DEFAULT_THRESHOLD), order ascending, limit k.
+  const queryVectorLiteral = `[${queryEmbedding.join(",")}]`;
+  const maxDistance = 1 - DEFAULT_THRESHOLD;
+
+  let vectorRows;
+  try {
+    vectorRows = await safeExecute(
+      `
+      SELECT dcv.chunk_id,
+             dc.chunk_index,
+             dc.content,
+             dcv.embedding <=> $1 AS distance
+      FROM document_chunk_vectors dcv
+      JOIN document_chunks dc ON dc.chunk_id = dcv.chunk_id
+      WHERE dcv.document_id = $2
+        AND dcv.embedding IS NOT NULL
+        AND dcv.embedding <=> $1 <= $3
+      ORDER BY dcv.embedding <=> $1
+      LIMIT $4
+      `,
+      [queryVectorLiteral, documentId, maxDistance, k],
+    );
+  } catch (error) {
+    console.error("=== DATABASE ERROR DURING DOCUMENT VECTOR SEARCH ===");
+    console.error("Error:", error);
+    throw error;
+  }
 
   if (!vectorRows || vectorRows.length === 0) {
     return { query, results: [] };
   }
 
-  const scored = [];
-  for (const row of vectorRows) {
-    try {
-      const embedding =
-        typeof row.embedding === "string"
-          ? JSON.parse(row.embedding)
-          : row.embedding;
-      const score = calculateCosineSimilarity(queryEmbedding, embedding);
-      if (score >= DEFAULT_THRESHOLD) {
-        scored.push({ chunkId: row.chunk_id, score });
-      }
-    } catch {
-      // Malformed vector — skip silently
-    }
-  }
-
-  scored.sort((a, b) => b.score - a.score);
-  const topK = scored.slice(0, k);
-
-  if (topK.length === 0) {
-    return { query, results: [] };
-  }
-
-  const chunkIds = topK.map((r) => r.chunkId);
-  const placeholders = chunkIds.map(() => "?").join(", ");
-  const chunkRows = await safeExecute(
-    `SELECT chunk_id, chunk_index, content FROM document_chunks WHERE chunk_id IN (${placeholders})`,
-    chunkIds,
-  );
-
-  const chunkMap = {};
-  chunkRows.forEach((c) => {
-    chunkMap[c.chunk_id] = { chunkIndex: c.chunk_index, content: c.content };
-  });
-
-  const results = topK
-    .filter((r) => chunkMap[r.chunkId])
-    .map((r) => ({
-      chunkId: r.chunkId,
-      chunkIndex: chunkMap[r.chunkId].chunkIndex,
-      score: Number(r.score.toFixed(6)),
-      excerpt: chunkMap[r.chunkId].content,
-    }));
+  const results = vectorRows.map((row) => ({
+    chunkId: row.chunk_id,
+    chunkIndex: row.chunk_index,
+    // Convert distance back to similarity score for the API response.
+    score: Number((1 - Number(row.distance)).toFixed(6)),
+    excerpt: row.content,
+  }));
 
   return { query, results };
 }

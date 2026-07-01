@@ -1,3 +1,5 @@
+-- WARNING: This file drops tables and is for local reset only. Do not run in production.
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `answer_votes`;

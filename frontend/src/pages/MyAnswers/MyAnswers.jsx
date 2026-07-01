@@ -21,12 +21,9 @@ function MyAnswers() {
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editContent,setEditContent] = useState("");
   const navigate = useNavigate();
-  useEffect(() => {
-    fetchMyAnswers();
-  }, []);
 
 //   function to fetch the my answers
-  const fetchMyAnswers = async () => {
+  async function fetchMyAnswers() {
     try {
       setIsLoading(true);
       const response = await apiClient.get("/api/answers/myAnswer");
@@ -34,12 +31,17 @@ function MyAnswers() {
         Array.isArray(response.data?.data) ? response.data.data : [],
       );
     } catch (err) {
-      console.log(err);
+      console.error(err);
       setError("Failed to fetch my answers");
     } finally {
       setIsLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMyAnswers();
+  }, []);
 
 // edit answer function handler
 const handleEditClick=(answer,e)=>{
@@ -67,7 +69,7 @@ const handleSaveEdit=async(answerId,e)=>{
     setEditingAnswerId(null);
     
   } catch (error) {
-    console.log(error);
+    console.error(error);
     alert("Failed to save answer");
   }
 }
@@ -91,7 +93,7 @@ const confirmDelete = async()=>{
         );
         setDeletingAnswerId(null);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         alert("Failed to delete answer");
     }
 }
