@@ -9,7 +9,7 @@
  * (top "Forum" bar, left NAVIGATE sidebar, footer) — this component only
  * renders the inner page content, matching how Dashboard.jsx is structured.
  *
- * Backend: http://localhost:3777/api/rag
+ * Backend: /api/rag
  *   GET    /documents                       list
  *   POST   /documents                       upload (multipart, field "file")
  *   GET    /documents/:id                   meta
@@ -24,7 +24,7 @@
  * while the upload request is in flight.
  */
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import axios from "axios";
+import { apiClient } from "../../services/core/api.client";
 import {
   FileText,
   Upload,
@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import styles from "./RagAnswerBody.module.css";
 
-const RAG_API_BASE = "http://localhost:3777/api/rag";
+const RAG_API_BASE = "/api/rag";
 
 const TABS = [
   { id: "preview", label: "PDF Preview", icon: FileText },
@@ -59,11 +59,6 @@ function statusBadgeClass(status) {
     default:
       return styles["badge-processing"];
   }
-}
-
-function authHeaders() {
-  const token = localStorage.getItem("token");
-  return { Authorization: `Bearer ${token}` };
 }
 
 export default function RagDocuments() {
@@ -108,9 +103,7 @@ export default function RagDocuments() {
     try {
       setDocsLoading(true);
       setDocsError(null);
-      const res = await axios.get(`${RAG_API_BASE}/documents`, {
-        headers: authHeaders(),
-      });
+      const res = await apiClient.get(`${RAG_API_BASE}/documents`);
       setDocuments(res.data?.data ?? []);
     } catch (err) {
       console.error("Failed to load documents:", err);
@@ -121,6 +114,7 @@ export default function RagDocuments() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDocuments();
   }, [fetchDocuments]);
 
@@ -155,9 +149,8 @@ export default function RagDocuments() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const res = await axios.post(`${RAG_API_BASE}/documents`, formData, {
+      const res = await apiClient.post(`${RAG_API_BASE}/documents`, formData, {
         headers: {
-          ...authHeaders(),
           "Content-Type": "multipart/form-data",
         },
       });
@@ -183,9 +176,7 @@ export default function RagDocuments() {
   const handleDelete = async (documentId, e) => {
     e.stopPropagation();
     try {
-      await axios.delete(`${RAG_API_BASE}/documents/${documentId}`, {
-        headers: authHeaders(),
-      });
+      await apiClient.delete(`${RAG_API_BASE}/documents/${documentId}`);
       setDocuments((prev) => prev.filter((d) => d.document_id !== documentId));
       if (selectedDocId === documentId) {
         setSelectedDocId(null);
@@ -222,9 +213,9 @@ export default function RagDocuments() {
       setPreviewLoading(true);
       setPreviewError(null);
       try {
-        const res = await axios.get(
+        const res = await apiClient.get(
           `${RAG_API_BASE}/documents/${selectedDoc.document_id}/file`,
-          { headers: authHeaders(), responseType: "blob" },
+          { responseType: "blob" },
         );
         objectUrl = URL.createObjectURL(res.data);
         setPreviewUrl(objectUrl);
@@ -250,10 +241,9 @@ export default function RagDocuments() {
     setSearching(true);
     setSearchError(null);
     try {
-      const res = await axios.get(
+      const res = await apiClient.get(
         `${RAG_API_BASE}/documents/${selectedDoc.document_id}/search`,
         {
-          headers: authHeaders(),
           params: { query: searchQuery.trim(), k: 5 },
         },
       );
@@ -273,10 +263,9 @@ export default function RagDocuments() {
     setAsking(true);
     setAskError(null);
     try {
-      const res = await axios.post(
+      const res = await apiClient.post(
         `${RAG_API_BASE}/documents/${selectedDoc.document_id}/query`,
         { query: question.trim() },
-        { headers: authHeaders() },
       );
       setAskAnswer(res.data?.data ?? null);
     } catch (err) {

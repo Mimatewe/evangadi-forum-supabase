@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import { apiClient } from "../../services/core/api.client";
 import {
   ArrowLeft,
   Share2,
@@ -69,12 +69,7 @@ export default function QuestionDetail() {
       try {
         setIsLoading(true);
         setError(null);
-        const token = localStorage.getItem("token");
-
-        const { data } = await axios.get(
-          `http://localhost:3777/api/questions/${questionHash}`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+        const { data } = await apiClient.get(`/api/questions/${questionHash}`);
 
         setQuestion(data.question);
         setAnswers(data.question?.answers ?? []);
@@ -92,10 +87,8 @@ useEffect(() => {
   const fetchRelated = async () => {
     try {
       setRelatedLoading(true);
-      const token = localStorage.getItem("token");
-      const { data } = await axios.get(
-        `http://localhost:3777/api/questions/${questionHash}/similar`,
-        { headers: { Authorization: `Bearer ${token}` } },
+      const { data } = await apiClient.get(
+        `/api/questions/${questionHash}/similar`,
       );
       setRelatedQuestions(data.data ?? []);
     } catch (err) {
@@ -114,14 +107,12 @@ useEffect(() => {
     try {
       setIsPosting(true);
       setPostError(null);
-      const token = localStorage.getItem("token");
-      const { data } = await axios.post(
-        `http://localhost:3777/api/answers`,
+      const { data } = await apiClient.post(
+        "/api/answers",
         {
           questionId: question.id,
           content: answerText.trim(),
         },
-        { headers: { Authorization: `Bearer ${token}` } },
       );
       const newAnswer = data.answer ?? data.data;
       if (newAnswer) {
@@ -145,16 +136,12 @@ useEffect(() => {
 
   const handleVote = async (answer, value) => {
     try {
-      const token = localStorage.getItem("token");
       const isClearingVote = Number(answer.currentUserVote) === value;
       const { data } = isClearingVote
-        ? await axios.delete(`http://localhost:3777/api/answers/${answer.id}/vote`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        : await axios.put(
-            `http://localhost:3777/api/answers/${answer.id}/vote`,
+        ? await apiClient.delete(`/api/answers/${answer.id}/vote`)
+        : await apiClient.put(
+            `/api/answers/${answer.id}/vote`,
             { value },
-            { headers: { Authorization: `Bearer ${token}` } },
           );
 
       setAnswers((prev) =>
@@ -176,12 +163,7 @@ useEffect(() => {
 
   const handleAcceptAnswer = async (answerId) => {
     try {
-      const token = localStorage.getItem("token");
-      const { data } = await axios.put(
-        `http://localhost:3777/api/answers/${answerId}/accept`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      const { data } = await apiClient.put(`/api/answers/${answerId}/accept`);
       setQuestion((prev) => ({
         ...prev,
         acceptedAnswerId: data.data?.acceptedAnswerId ?? answerId,
@@ -199,11 +181,9 @@ useEffect(() => {
     try {
       setIsChecking(true);
       setFitResult(null);
-      const token = localStorage.getItem("token");
-      const { data } = await axios.post(
-        `http://localhost:3777/api/questions/${questionHash}/answer-fit`,
+      const { data } = await apiClient.post(
+        `/api/questions/${questionHash}/answer-fit`,
         { answerText: answerText.trim() },
-        { headers: { Authorization: `Bearer ${token}` } },
       );
       // API returns: { success, message, data: { level, note } }
       setFitResult(data.data);

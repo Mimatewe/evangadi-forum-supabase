@@ -5,11 +5,11 @@
 }
 
 .headerCard {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 1.4rem 1.5rem;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  background: linear-gradient(135deg, #ffffff, #fff7ed);
+  border-radius: 18px;
+  padding: 32px;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .05);
 }
 
 .eyebrow {
@@ -54,17 +54,25 @@
 .questionRow {
   width: 100%;
   display: flex;
+  gap: 18px;
   align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
+  padding: 22px;
+  background: white;
   border: none;
-  border-bottom: 1px solid #f1f5f9;
-  background: #ffffff;
-  text-align: left;
+  border-bottom: 1px solid #ececec;
   cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    transform 0.15s ease;
+  transition: all 0.25s ease;
+  text-align: left;
+}
+
+.questionRow:hover {
+  background: #fff7ed;
+
+  transform: translateY(-2px);
+
+  border-left: 5px solid #f97316;
+
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
 }
 
 .questionRow:last-child {
@@ -76,19 +84,21 @@
 }
 
 .profileAvatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
-  border: 1px solid #f97316;
-  color: #ffffff;
-  font-size: 0.875rem;
-  font-weight: 700;
-  box-shadow: 0 6px 14px rgba(249, 115, 22, 0.18);
+
+  background: linear-gradient(135deg, #f97316, #fb923c);
+
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+
+  box-shadow: 0 10px 20px rgba(249, 115, 22, 0.25);
 }
 
 .questionContent {
@@ -129,19 +139,17 @@
 }
 
 .questionTitle {
-  margin: 0.45rem 0 0;
-  font-size: 1.1rem;
-  line-height: 1.35;
-  color: #0f172a;
+  margin-top: 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
 }
 
 .questionExcerpt {
-  margin: 0.45rem 0 0;
-  color: #475569;
-  font-size: 0.95rem;
-  line-height: 1.6;
+  margin-top: 10px;
+  color: #6b7280;
+  line-height: 1.8;
 }
-
 .questionFooter {
   display: flex;
   align-items: center;
@@ -150,8 +158,15 @@
 }
 
 .replyCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 15px;
+  padding: 7px 14px;
+  background: #fff7ed;
+  border-radius: 20px;
   color: #f97316;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .stateCard {

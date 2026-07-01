@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { apiClient } from "../../services/core/api.client";
 import "./PostQuestion.css";
 import {
   Bold,
@@ -107,20 +107,14 @@ export default function PostQuestion() {
 
     try {
       setIsSubmitting(true);
-      const token = localStorage.getItem("token");
       const requestBody = {
         ...formData,
         tags: buildTagsForSubmit(),
       };
 
-      console.log("POST QUESTION BODY:", requestBody);
-
-      const response = await axios.post(
-        "http://localhost:3777/api/questions",
+      const response = await apiClient.post(
+        "/api/questions",
         requestBody,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
       );
 
       if (response.data.success) {
@@ -150,14 +144,9 @@ export default function PostQuestion() {
 
     try {
       setIsCoaching(true);
-      const token = localStorage.getItem("token");
-
-      const response = await axios.post(
-        "http://localhost:3777/api/questions/draft-coach",
+      const response = await apiClient.post(
+        "/api/questions/draft-coach",
         formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
       );
 
       if (response.data?.data) {

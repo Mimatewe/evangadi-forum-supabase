@@ -21,6 +21,7 @@ export default function Navbar({ title, subtitle, user, onLogout }) {
   useEffect(() => {
     if (location.pathname === "/dashboard" || location.pathname === "/") {
       const params = new URLSearchParams(location.search);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchTerm(params.get("q") || params.get("semantic") || "");
     } else {
       setSearchTerm("");
