@@ -1,0 +1,477 @@
+/* ==========================================
+   Cohort Forum Home Dashboard Styles
+   ========================================== */
+
+.dashboard-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.dashboard-header {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-welcome {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+.wave {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: waveHand 2.5s infinite;
+}
+
+@keyframes waveHand {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  30% { transform: rotate(14deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
+  60% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Quick Action Grid Architecture */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.action-card {
+  display: flex;
+  align-items: start;
+  gap: 1rem;
+  background: #f8fafc; /* Crisp low-contrast background profile */
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-card:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+  transform: translateY(-1px);
+}
+
+.action-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  width: 40px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.action-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.action-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.action-desc {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #475569;
+  margin: 0;
+}
+
+/* Feed Divider Text */
+.feed-info-bar {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.feed-info-bar p {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Analytics Metrics Display Section */
+.metrics-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .metrics-summary-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.metric-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+.metric-label {
+  font-size: 0.725rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.metric-counter {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1;
+}
+
+/* Helper utility */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* ==========================================
+   Discussion Feed Card Panel Styles
+   ========================================== */
+
+.discussion-feed-panel {
+  margin-top: 2rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.01);
+  width: 100%;
+}
+
+.feed-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.feed-panel-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.feed-panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.feed-panel-subtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Linear/Notion inspired active text pill block matches image right-align orange tag */
+.feed-active-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #f97316;
+  color: #ffffff;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  user-select: none;
+}
+
+/* Centered content box layout area */
+.feed-panel-body {
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  min-height: 180px;
+}
+
+/* Empty State Container Overlay Box */
+.empty-feed-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8fafc; /* Subtle grey matching design mockup */
+  border: 1px dashed #e2e8f0; /* Low footprint border frame boundary */
+  border-radius: 8px;
+  padding: 2rem 3rem;
+  max-width: 420px;
+  width: 100%;
+}
+
+.empty-state-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  margin: 0;
+  text-align: center;
+}
+
+/* ==========================================
+   Active Threads List Layout
+   ========================================== */
+
+.active-threads-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Override padding-less body structure to maximize layout use */
+.feed-panel-body:has(.active-threads-list) {
+  padding: 0 !important;
+  display: block !important;
+}
+
+.thread-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:22px;
+    background:white;
+    transition:.25s;
+    cursor:pointer;
+    border-bottom:1px solid #edf2f7;
+}
+
+.thread-row:last-child {
+  border-bottom: none;
+}
+
+.thread-row:hover{
+    background:#fffaf5;
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(0,0,0,.06);
+}
+
+/* 🔸 Conditional Feature: Applies a slim left accent line if it's authored by the user */
+.user-owned-thread {
+   border-left:5px solid #f97316;
+  padding-left: calc(1.5rem - 3px); /* Offsets border-width change seamlessly */
+   background:#fffaf5;
+}
+.thread-row:not(.user-owned-thread) {
+  border-left: 5px solid #3b82f6;
+  background: #eff6ff;
+}
+
+.thread-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.thread-row-title{
+    font-size:18px;
+    font-weight:700;
+    color:#111827;
+   transition:.2s;
+}
+.thread-row:hover .thread-row-title{
+    color:#ea580c;
+}
+.thread-meta-row{
+    margin-top:6px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    color:#64748b;
+    font-size:13px;
+}
+
+.meta-divider {
+  color: #cbd5e1;
+}
+
+.thread-stats-badge{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    border-radius:25px;
+    background:#fff7ed;
+    color:#ea580c;
+    font-weight:700;
+}
+
+.row-arrow-icon {
+  color: #94a3b8;
+  margin-left: 0.25rem;
+}
+.threadPreview{
+    margin-top:10px;
+    color:#6b7280;
+    line-height:1.7;
+    font-size:14px;
+}
+.authorRow{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+}
+
+.youBadge{
+    background:#f97316;
+    color:white;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:600;
+}
+/* ==========================================
+   Thread Row Sub-Layout with Avatar Circle
+   ========================================== */
+
+.thread-left-layout {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem; /* Balanced layout spacing between avatar and text blocks */
+  flex: 1;
+  min-width: 0; /* Safeguards text overflow truncations */
+}
+
+.avatar-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg,#3b82f6,#60a5fa);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 8px 20px rgba(249,115,22,.25);
+  transition: .25s;
+}
+.thread-row:hover .avatar-circle{
+    transform:scale(1.08);
+}
+
+/* Optional: Gives your specific threads a subtle warm background hue on the avatar */
+.user-owned-thread .avatar-circle {
+  background-color: #fff7ed;
+  border-color: #ffedd5;
+  color: #ea580c;
+  background: linear-gradient(135deg,#f97316,#fb923c);
+}
+
+/* Pagination */
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+  flex-wrap: wrap;
+}
+
+.paginationNumbers {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.paginationButton,
+.paginationNumber {
+  height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.paginationButton:hover:not(:disabled),
+.paginationNumber:hover:not(:disabled) {
+  border-color: #f97316;
+  color: #f97316;
+  transform: translateY(-1px);
+}
+
+.paginationButton:disabled,
+.paginationNumber:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.paginationNumberActive {
+  background: #f97316;
+  border-color: #f97316;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.18);
+}
+
+.paginationNumberActive:hover:not(:disabled) {
+  background: #ea580c;
+  border-color: #ea580c;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .paginationBar {
+    justify-content: space-between;
+  }
+
+  .paginationNumbers {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.action-details {
+  cursor: pointer;
+}

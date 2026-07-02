@@ -5,10 +5,9 @@ import cors from "cors";
 import { db } from "./db/config.js";
 import { mainRoutes } from "./src/api/routes.js";
 const app = express();
-const PORT = process.env.PORT || 5000;
+const port = process.env.PORT || 3777;
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:3000",
   process.env.FRONTEND_URL,
   process.env.CORS_ORIGIN,
 ]
@@ -51,7 +50,12 @@ app.get("/", (req, res) => {
 
 // Health Check
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "Backend is running" });
+  res.json({
+    success: true,
+    message: "Backend is healthy",
+    service: "evangadi-forum-api",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Database + pgvector health check
@@ -99,12 +103,12 @@ const startServer = async () => {
     console.log("Database connection established successfully");
     connection.release();
 
-    app.listen(PORT, "0.0.0.0", (err) => {
+    app.listen(port, (err) => {
       if (err) {
         console.error("Failed to start the server:", err.message);
         process.exit(1);
       }
-      console.log(`Server running on port ${PORT}`);
+      console.log(`Server running on port http://localhost:${port}`);
     });
   } catch (error) {
     console.error(error);

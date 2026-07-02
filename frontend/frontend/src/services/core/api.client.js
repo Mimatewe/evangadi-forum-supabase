@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
 
 if (!API_BASE_URL && import.meta.env.PROD) {
   console.warn(
@@ -12,7 +12,7 @@ if (!API_BASE_URL && import.meta.env.PROD) {
  * Configured axios instance for API communication.
  */
 const apiClient = axios.create({
-  baseURL: API_BASE_URL || 'http://localhost:5000',
+  baseURL: API_BASE_URL || 'http://localhost:3777',
   timeout: 15000, // Increased timeout for cold starts
   headers: {
     'Content-Type': 'application/json',
