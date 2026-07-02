@@ -10,7 +10,7 @@
  */
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import { apiClient } from "../../services/core/api.client";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   Edit3,
@@ -146,12 +146,10 @@ export default function Dashboard() {
 
         // Only call the vector endpoint for semantic; everything else → base URL
         const targetUrl = semanticQuery
-          ? `http://localhost:3777/api/questions/search?query=${encodeURIComponent(semanticQuery)}`
-          : "http://localhost:3777/api/questions";
+          ? `/api/questions/search?query=${encodeURIComponent(semanticQuery)}`
+          : "/api/questions";
 
-        const response = await axios.get(targetUrl, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await apiClient.get(targetUrl);
 
         console.log(
           "[Dashboard] raw[0]:",
