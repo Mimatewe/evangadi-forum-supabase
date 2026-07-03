@@ -2,6 +2,12 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+// If VITE_API_URL is "https://.../api", strip the "/api" suffix because 
+// our apiClient calls already include the "/api" prefix (e.g. /api/auth/login).
+const baseURL = API_BASE_URL 
+  ? API_BASE_URL.replace(/\/api$/, '') 
+  : 'http://localhost:5000';
+
 if (!API_BASE_URL && import.meta.env.PROD) {
   console.warn(
     'VITE_API_URL is not defined in production. API calls will likely fail.'
@@ -12,7 +18,7 @@ if (!API_BASE_URL && import.meta.env.PROD) {
  * Configured axios instance for API communication.
  */
 const apiClient = axios.create({
-  baseURL: API_BASE_URL || 'http://localhost:5000',
+  baseURL,
   timeout: 15000, // Increased timeout for cold starts
   headers: {
     'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 /**
  * Dashboard: default home after login; question list, quick actions, URL-driven search.
- * Data: Fetched dynamically from GET http://localhost:3777/api/questions
+ * Data: Fetched dynamically from the configured backend API.
  *
  * Search behaviour:
  *   • ?q=term      — fetches all questions once, then filters client-side in real-time
